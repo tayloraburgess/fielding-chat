@@ -50,8 +50,31 @@ function endpointBehavior(endpoint) {
   });
 }
 
+function idempotent(endpoint) {
+  it('should respond with the same representation if requested multiple times', (done) => {
+    let firstReqBody;
+    let firstReqStatus;
+    chai.request(app)
+    .get(endpoint)
+    .end((err, res) => {
+      should.not.exist(err);
+      firstReqBody = res.body;
+      firstReqStatus = res.status;
+      chai.request(app)
+      .get(endpoint)
+      .end((err2, res2) => {
+        should.not.exist(err2);
+        firstReqBody.should.deep.equal(res2.body);
+        firstReqStatus.should.equal(res2.status);
+        done();
+      });
+    });
+  });
+}
+
 describe('/api/v1', () => {
   describe('GET', () => {
     endpointBehavior('/api/v1');
+    idempotent('/api/v1');
   });
 });

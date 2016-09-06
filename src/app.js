@@ -6,7 +6,7 @@ import express from 'express';
 const app = express();
 
 app.get('/api/v1', (req, res) => {
-  if (req.accepts('application/hal+json') || req.accepts('application/json')) {
+  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     res.status(200)
     .type('application/hal+json')
     .json({
