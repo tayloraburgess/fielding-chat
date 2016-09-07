@@ -7,7 +7,7 @@ import {
   Log,
 } from '../src/models.js';
 
-export function dbConnect(dbName, callback = null) {
+export function connect(dbName, callback = null) {
   const conn = mongoose.connect(dbName, (err) => {
     if (callback) {
       if (err) {
@@ -19,7 +19,7 @@ export function dbConnect(dbName, callback = null) {
   });
 }
 
-export function dbDisconnect(callback = null) {
+export function disconnect(callback = null) {
   const conn = mongoose.connection.close((err) => {
     if (callback) {
       if (err) {
@@ -31,7 +31,7 @@ export function dbDisconnect(callback = null) {
   });
 }
 
-export function dbDrop(callback = null) {
+export function drop(callback = null) {
   mongoose.connection.db.dropDatabase((err) => {
     if (callback) {
       if (err) {
@@ -43,7 +43,7 @@ export function dbDrop(callback = null) {
   });
 }
 
-export function dbGetUsers(callback = null) {
+export function getUsers(callback = null) {
 /* eslint-disable array-callback-return */
   User.find((err, users) => {
 /* eslint-enable array-callback-return */
@@ -57,8 +57,8 @@ export function dbGetUsers(callback = null) {
   });
 }
 
-export function dbCreateUser(name, callback = null) {
-  dbGetUsers((err1, res) => {
+export function createUser(name, callback = null) {
+  getUsers((err1, res) => {
     const filteredUsers = res.filter((user) => {
       if (user.name === name) {
         return user;
@@ -85,7 +85,7 @@ export function dbCreateUser(name, callback = null) {
   });
 }
 
-export function dbCreateMessage(userId, text, callback = null) {
+export function createMessage(userId, text, callback = null) {
   const newMessage = new Message({
     user_id: userId,
     text,
@@ -102,7 +102,7 @@ export function dbCreateMessage(userId, text, callback = null) {
   });
 }
 
-export function dbGetMessages(callback = null) {
+export function getMessages(callback = null) {
 /* eslint-disable array-callback-return */
   Message.find((err, messages) => {
 /* eslint-enable array-callback-return */
@@ -116,7 +116,7 @@ export function dbGetMessages(callback = null) {
   });
 }
 
-export function dbCreateLog(userIds, messageIds, name, callback = null) {
+export function createLog(userIds, messageIds, name, callback = null) {
   const newLog = new Log({
     user_ids: userIds,
     message_ids: messageIds,
@@ -134,7 +134,7 @@ export function dbCreateLog(userIds, messageIds, name, callback = null) {
   });
 }
 
-export function dbGetLogs(callback = null) {
+export function getLogs(callback = null) {
 /* eslint-disable array-callback-return */
   Log.find((err, logs) => {
 /* eslint-enable array-callback-return */
