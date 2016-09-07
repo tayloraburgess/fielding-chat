@@ -57,6 +57,18 @@ export function getUsers(callback = null) {
   });
 }
 
+export function getUserById(userId, callback = null) {
+  User.findById(userId, (err, user) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, user);
+      }
+    }
+  });
+}
+
 export function createUser(name, callback = null) {
   getUsers((err1, res) => {
     const filteredUsers = res.filter((user) => {
@@ -111,6 +123,18 @@ export function getMessages(callback = null) {
         callback(err, null);
       } else {
         callback(null, messages);
+      }
+    }
+  });
+}
+
+export function getMessageById(messageId, callback = null) {
+  Message.findById(messageId, (err, message) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, message);
       }
     }
   });

@@ -79,6 +79,17 @@ describe('mongo', () => {
         });
       });
     });
+    describe('getUserById()', () => {
+      it('should get the user with the input id and pass it to the callback', (done) => {
+        db.createUser('test', (err1, userRes1) => {
+          db.getUserById(userRes1._id, (err2, userRes2) => {
+            should.not.exist(err2);
+            userRes2._id.toString().should.equal(userRes1._id.toString());
+            done();
+          });
+        });
+      });
+    });
     describe('createMessage()', () => {
       it('should add a new message to the database', (done) => {
         db.createUser('test', (err1, userRes) => {
@@ -105,6 +116,19 @@ describe('mongo', () => {
                 msgsRes[1].text.should.equal('test 2');
                 done();
               });
+            });
+          });
+        });
+      });
+    });
+    describe('getMessageById()', () => {
+      it('should get the message with the input id and pass it to the callback', (done) => {
+        db.createUser('test', (err1, userRes) => {
+          db.createMessage(userRes._id, 'test message', (err2, msgRes1) => {
+            db.getMessageById(msgRes1._id, (err3, msgRes2) => {
+              should.not.exist(err3);
+              msgRes2._id.toString().should.equal(msgRes1._id.toString());
+              done();
             });
           });
         });
