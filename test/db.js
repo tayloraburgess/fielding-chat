@@ -291,6 +291,24 @@ describe('mongo', () => {
         });
       });
     });
+    describe('updateLogName()', () => {
+      it('should update input Log document with the input name', (done) => {
+        db.createUser('test', (err1, userRes) => {
+          db.createMessage(userRes._id, 'test message', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'test log 1', (err3, logRes1) => {
+              db.updateLogName(logRes1._id, 'test log 2', (err4, res) => {
+                should.not.exist(err4);
+                res.nModified.should.equal(1);
+                db.getLogById(logRes1._id, (err5, logRes2) => {
+                  logRes2.name.should.equal('test log 2');
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
     describe('addUserToLog()', () => {
       it('should update input Log document with a new user in user_ids', (done) => {
         db.createUser('first', (err1, userRes1) => {

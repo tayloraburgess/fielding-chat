@@ -262,6 +262,20 @@ export function getLogById(logId, callback = null) {
   });
 }
 
+export function updateLogName(logId, newName, callback = null) {
+  const query = { _id: logId };
+  const newData = { name: newName };
+  Log.update(query, newData, {}, (err, res) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, res);
+      }
+    }
+  });
+}
+
 export function addUserToLog(logId, newUser, callback = null) {
   getLogById(logId, (err, logRes) => {
     if (err && callback) {
