@@ -125,15 +125,28 @@ describe('mongo', () => {
       });
     });
     describe('createMessage()', () => {
-      it('should add a new message to the database', (done) => {
+      it('should add a new Message to the database', (done) => {
         db.createUser('test', (err1, userRes) => {
           db.createMessage(userRes._id, 'test message', (err2, msgRes) => {
             should.not.exist(err2);
+            msgRes.should.have.property('ref_id');
+            msgRes.ref_id.should.equal(1);
             msgRes.should.have.property('user_id');
             msgRes.user_id.should.equal(userRes._id);
             msgRes.should.have.property('text');
             msgRes.text.should.equal('test message');
             done();
+          });
+        });
+      });
+      it('should increment the ref_id of the new Message from the previous Message', (done) => {
+        db.createUser('test', (err1, userRes) => {
+          db.createMessage(userRes._id, 'test message 1', () => {
+            db.createMessage(userRes._id, 'test message 2', (err3, msgRes) => {
+              should.not.exist(err3);
+              msgRes.ref_id.should.equal(2);
+              done();
+            });
           });
         });
       });

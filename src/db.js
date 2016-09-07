@@ -129,23 +129,6 @@ export function deleteUser(userId, callback = null) {
   });
 }
 
-export function createMessage(userId, text, callback = null) {
-  const newMessage = new Message({
-    user_id: userId,
-    text,
-    created_at: new Date(),
-  });
-  newMessage.save((err, resMessage) => {
-    if (callback) {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, resMessage);
-      }
-    }
-  });
-}
-
 export function getMessages(callback = null) {
 /* eslint-disable array-callback-return */
   Message.find((err, messages) => {
@@ -157,6 +140,32 @@ export function getMessages(callback = null) {
         callback(null, messages);
       }
     }
+  });
+}
+
+export function createMessage(userId, text, callback = null) {
+  getMessages((err1, res) => {
+    let refId;
+    if (res.length === 0) {
+      refId = 1;
+    } else {
+      refId = res[res.length - 1].ref_id + 1;
+    }
+    const newMessage = new Message({
+      user_id: userId,
+      ref_id: refId,
+      text,
+      created_at: new Date(),
+    });
+    newMessage.save((err2, resMessage) => {
+      if (callback) {
+        if (err2) {
+          callback(err2, null);
+        } else {
+          callback(null, resMessage);
+        }
+      }
+    });
   });
 }
 

@@ -10,6 +10,7 @@ export const User = mongoose.model('User', userSchema);
 
 const messageSchema = new mongoose.Schema({
   user_id: { type: mongoose.Schema.Types.ObjectId },
+  ref_id: { type: Number, required: true },
   text: { type: String, required: true },
   created_at: { type: Date, required: true },
 });
