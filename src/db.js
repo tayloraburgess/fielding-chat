@@ -7,31 +7,31 @@ import {
   Log,
 } from '../src/models.js';
 
-export function dbConnect(dbName, callback = false) {
-  mongoose.connect(dbName, (err) => {
+export function dbConnect(dbName, callback = null) {
+  const conn = mongoose.connect(dbName, (err) => {
     if (callback) {
       if (err) {
-        callback(err);
+        callback(err, null);
       } else {
-        callback(true);
+        callback(null, conn);
       }
     }
   });
 }
 
-export function dbDisconnect(callback = false) {
-  mongoose.connection.close((err) => {
+export function dbDisconnect(callback = null) {
+  const conn = mongoose.connection.close((err) => {
     if (callback) {
       if (err) {
-        callback(err);
+        callback(err, null);
       } else {
-        callback(true);
+        callback(null, conn);
       }
     }
   });
 }
 
-export function dbDrop(callback = false) {
+export function dbDrop(callback = null) {
   mongoose.connection.db.dropDatabase((err) => {
     if (callback) {
       if (err) {
@@ -43,22 +43,22 @@ export function dbDrop(callback = false) {
   });
 }
 
-export function dbGetUsers(callback = false) {
+export function dbGetUsers(callback = null) {
 /* eslint-disable array-callback-return */
   User.find((err, users) => {
 /* eslint-enable array-callback-return */
     if (callback) {
       if (err) {
-        callback(err);
+        callback(err, null);
       } else {
-        callback(users);
+        callback(null, users);
       }
     }
   });
 }
 
-export function dbCreateUser(name, callback = false) {
-  dbGetUsers((res) => {
+export function dbCreateUser(name, callback = null) {
+  dbGetUsers((err1, res) => {
     const filteredUsers = res.filter((user) => {
       if (user.name === name) {
         return user;
@@ -70,22 +70,22 @@ export function dbCreateUser(name, callback = false) {
         name,
         created_at: new Date(),
       });
-      newUser.save((err, resUser) => {
+      newUser.save((err2, resUser) => {
         if (callback) {
-          if (err) {
-            callback(err);
+          if (err2) {
+            callback(err2, null);
           } else {
-            callback(resUser);
+            callback(null, resUser);
           }
         }
       });
     } else if (callback) {
-      callback(false);
+      callback(null, filteredUsers[0]);
     }
   });
 }
 
-export function dbCreateMessage(userId, text, callback = false) {
+export function dbCreateMessage(userId, text, callback = null) {
   const newMessage = new Message({
     user_id: userId,
     text,
@@ -94,29 +94,29 @@ export function dbCreateMessage(userId, text, callback = false) {
   newMessage.save((err, resMessage) => {
     if (callback) {
       if (err) {
-        callback(err);
+        callback(err, null);
       } else {
-        callback(resMessage);
+        callback(null, resMessage);
       }
     }
   });
 }
 
-export function dbGetMessages(callback = false) {
+export function dbGetMessages(callback = null) {
 /* eslint-disable array-callback-return */
   Message.find((err, messages) => {
 /* eslint-enable array-callback-return */
     if (callback) {
       if (err) {
-        callback(err);
+        callback(err, null);
       } else {
-        callback(messages);
+        callback(null, messages);
       }
     }
   });
 }
 
-export function dbCreateLog(userIds, messageIds, callback = false) {
+export function dbCreateLog(userIds, messageIds, callback = null) {
   const newLog = new Log({
     user_ids: userIds,
     message_ids: messageIds,
@@ -125,23 +125,23 @@ export function dbCreateLog(userIds, messageIds, callback = false) {
   newLog.save((err, resLog) => {
     if (callback) {
       if (err) {
-        callback(err);
+        callback(err, null);
       } else {
-        callback(resLog);
+        callback(null, resLog);
       }
     }
   });
 }
 
-export function dbGetLogs(callback = false) {
+export function dbGetLogs(callback = null) {
 /* eslint-disable array-callback-return */
   Log.find((err, logs) => {
 /* eslint-enable array-callback-return */
     if (callback) {
       if (err) {
-        callback(err);
+        callback(err, null);
       } else {
-        callback(logs);
+        callback(null, logs);
       }
     }
   });
