@@ -179,5 +179,20 @@ describe('mongo', () => {
         });
       });
     });
+    describe('getLogById()', () => {
+      it('should get the log with the input id and pass it to the callback', (done) => {
+        db.createUser('test', (err1, userRes) => {
+          db.createMessage(userRes._id, 'test message', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'test log 1', (err3, logRes1) => {
+              db.getLogById(logRes1._id, (err4, logRes2) => {
+                should.not.exist(err4);
+                logRes2._id.toString().should.equal(logRes1._id.toString());
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
   });
 });

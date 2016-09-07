@@ -171,3 +171,15 @@ export function getLogs(callback = null) {
     }
   });
 }
+
+export function getLogById(logId, callback = null) {
+  Log.findById(logId, (err, log) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, log);
+      }
+    }
+  });
+}
