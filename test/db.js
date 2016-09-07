@@ -4,7 +4,8 @@ import {
   dbConnect,
   dbDisconnect,
   dbCreateUser,
-  dbUserName
+  dbUserName,
+  dbGetUsers
 } from '../src/db.js';
 
 const chaiHTTP = require('chai-http');
@@ -50,6 +51,15 @@ describe('User', () => {
         res.should.have.property('name');
         res.name.should.equal('test');
         res.should.have.property('created_at');
+        done();
+      });
+    });
+  });
+  describe('dbGetUsers()', () => {
+    it('should get a list of users and pass them to the callback', (done) => {
+      dbGetUsers((res) => {
+        console.log(res);
+        res.should.be.a('array');
         done();
       });
     });

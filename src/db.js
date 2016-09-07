@@ -59,7 +59,7 @@ export function dbGetUserDate(name, callback=false) {
 	});
 }
 
-export function dbGetUsers(name, callback=false) {
+export function dbGetUsers(callback=false) {
 	User.find((err, users) => {
 		if (callback) {
 			if (err) {
