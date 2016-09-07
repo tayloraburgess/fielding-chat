@@ -3,6 +3,7 @@ import chai from 'chai';
 import {
   dbConnect,
   dbDisconnect,
+  dbDrop,
   dbCreateUser,
   dbGetUsers,
 } from '../src/db.js';
@@ -15,16 +16,16 @@ chai.should();
 describe('Mongo', () => {
   describe('dbConnect()', () => {
     it('should open a connection to the Mongo database', (done) => {
-      dbConnect((res) => {
+      dbConnect('mongodb://localhost/fielding_chat_test', (res) => {
         res.should.equal(true);
         dbDisconnect();
         done();
       });
     });
   });
-  describe('dbConnect()', () => {
+  describe('dbDisconnect()', () => {
     it('should close the connection to the Mongo database', (done) => {
-      dbConnect();
+      dbConnect('mongodb://localhost/fielding_chat_test');
       dbDisconnect((res) => {
         res.should.equal(true);
         done();
@@ -35,12 +36,17 @@ describe('Mongo', () => {
 
 describe('User', () => {
   before('start database', (done) => {
-    dbConnect(() => {
+    dbConnect('mongodb://localhost/fielding_chat_test', () => {
       done();
     });
   });
   after('close database', (done) => {
     dbDisconnect(() => {
+      done();
+    });
+  });
+  afterEach('drop database', (done) => {
+    dbDrop(() => {
       done();
     });
   });

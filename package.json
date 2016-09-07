@@ -19,7 +19,7 @@
   "scripts": {
     "start": "babel-node src/app.js",
     "test": "mocha --compilers js:babel-register",
-    "lint": "eslint",
+    "lint": "eslint .",
     "build": "babel src -d lib",
     "serve": "node lib/app.js"
   },

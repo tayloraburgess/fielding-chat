@@ -3,8 +3,8 @@
 import mongoose from 'mongoose';
 import { User } from '../src/models.js';
 
-export function dbConnect(callback = false) {
-  mongoose.connect('mongodb://localhost/fieldingchat', (err) => {
+export function dbConnect(dbName, callback = false) {
+  mongoose.connect(dbName, (err) => {
     if (callback) {
       if (err) {
         callback(err);
@@ -17,6 +17,18 @@ export function dbConnect(callback = false) {
 
 export function dbDisconnect(callback = false) {
   mongoose.connection.close((err) => {
+    if (callback) {
+      if (err) {
+        callback(err);
+      } else {
+        callback(true);
+      }
+    }
+  });
+}
+
+export function dbDrop(callback = false) {
+  mongoose.connection.db.dropDatabase((err) => {
     if (callback) {
       if (err) {
         callback(err);
