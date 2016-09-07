@@ -59,6 +59,14 @@ describe('User', () => {
         done();
       });
     });
+    it('should only add a user if the name is not taken', (done) => {
+      dbCreateUser('test', () => {
+        dbCreateUser('test', (res) => {
+          res.should.equal(false);
+          done();
+        });
+      });
+    });
   });
   describe('dbGetUsers()', () => {
     it('should get a list of users and pass them to the callback', (done) => {
