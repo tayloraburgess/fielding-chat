@@ -95,9 +95,33 @@ function endpointMethods(endpoint, methods) {
 }
 
 describe('/api/v1', () => {
+  endpointMethods('/api/v1/', ['GET']);
   describe('GET', () => {
     endpointMedia('/api/v1');
     endpointIdempotent('/api/v1');
   });
-  endpointMethods('/api/v1/', ['GET']);
+});
+
+describe('/api/v1/users', () => {
+  endpointMethods('/api/v1/users/', ['GET', 'POST']);
+  describe('GET', () => {
+    endpointMedia('/api/v1/users');
+    endpointIdempotent('/api/v1/users');
+  });
+});
+
+describe('/api/v1/messages', () => {
+  endpointMethods('/api/v1/messages/', ['GET', 'POST']);
+  describe('GET', () => {
+    endpointMedia('/api/v1/messages');
+    endpointIdempotent('/api/v1/messages');
+  });
+});
+
+describe('/api/v1/logs', () => {
+  endpointMethods('/api/v1/logs/', ['GET', 'POST']);
+  describe('GET', () => {
+    endpointMedia('/api/v1/logs');
+    endpointIdempotent('/api/v1/logs');
+  });
 });
