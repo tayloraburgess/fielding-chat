@@ -116,10 +116,11 @@ export function dbGetMessages(callback = null) {
   });
 }
 
-export function dbCreateLog(userIds, messageIds, callback = null) {
+export function dbCreateLog(userIds, messageIds, name, callback = null) {
   const newLog = new Log({
     user_ids: userIds,
     message_ids: messageIds,
+    name,
     created_at: new Date(),
   });
   newLog.save((err, resLog) => {

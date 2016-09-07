@@ -124,33 +124,37 @@ describe('mongo', () => {
       it('should add a new log to the database', (done) => {
         dbCreateUser('test', (err1, userRes) => {
           dbCreateMessage(userRes._id, 'foo', (err2, msgRes) => {
-            dbCreateLog([userRes._id], [msgRes._id], (err3, logRes) => {
+            dbCreateLog([userRes._id], [msgRes._id], 'test log', (err3, logRes) => {
               should.not.exist(err3);
               logRes.should.have.property('user_ids');
               logRes.user_ids[0].should.equal(userRes._id);
               logRes.should.have.property('message_ids');
               logRes.message_ids[0].should.equal(msgRes._id);
+              logRes.should.have.property('name');
+              logRes.name.should.equal('test log');
               done();
             });
           });
         });
       });
     });
-    describe('dbGetMessages()', () => {
-      it('should get a list of messages and pass them to the callback', (done) => {
+    describe('dbGetLogs()', () => {
+      it('should get a list of logs and pass them to the callback', (done) => {
         dbCreateUser('test1', (err1, userRes1) => {
           dbCreateUser('test2', (err2, userRes2) => {
             dbCreateMessage(userRes1._id, 'test 1', (err3, msgRes1) => {
               dbCreateMessage(userRes2._id, 'test 2', (err4, msgRes2) => {
-                dbCreateLog([userRes1._id], [msgRes1._id], () => {
-                  dbCreateLog([userRes2._id], [msgRes2._id], () => {
+                dbCreateLog([userRes1._id], [msgRes1._id], 'test log 1', () => {
+                  dbCreateLog([userRes2._id], [msgRes2._id], 'test log 2', () => {
                     dbGetLogs((err5, logsRes) => {
                       should.not.exist(err5);
                       logsRes.should.be.a('array');
                       logsRes[0].user_ids[0].toString().should.equal(userRes1._id.toString());
                       logsRes[0].message_ids[0].toString().should.equal(msgRes1._id.toString());
+                      logsRes[0].name.should.equal('test log 1');
                       logsRes[1].user_ids[0].toString().should.equal(userRes2._id.toString());
                       logsRes[1].message_ids[0].toString().should.equal(msgRes2._id.toString());
+                      logsRes[1].name.should.equal('test log 2');
                       done();
                     });
                   });
