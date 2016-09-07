@@ -8,24 +8,24 @@ import {
 } from '../src/models.js';
 
 export function connect(dbName, callback = null) {
-  const conn = mongoose.connect(dbName, (err) => {
+  mongoose.connect(dbName, (err) => {
     if (callback) {
       if (err) {
-        callback(err, null);
+        callback(err);
       } else {
-        callback(null, conn);
+        callback(null);
       }
     }
   });
 }
 
 export function disconnect(callback = null) {
-  const conn = mongoose.connection.close((err) => {
+  mongoose.connection.close((err) => {
     if (callback) {
       if (err) {
-        callback(err, null);
+        callback(err);
       } else {
-        callback(null, conn);
+        callback(null);
       }
     }
   });
@@ -97,6 +97,24 @@ export function createUser(name, callback = null) {
   });
 }
 
+export function deleteUser(userId, callback = null) {
+  getUserById(userId, (err1) => {
+    if (err1 & callback) {
+      callback(err1);
+    } else {
+      User.remove({ _id: userId }, (err2) => {
+        if (callback) {
+          if (err2) {
+            callback(err2);
+          } else {
+            callback(null);
+          }
+        }
+      });
+    }
+  });
+}
+
 export function createMessage(userId, text, callback = null) {
   const newMessage = new Message({
     user_id: userId,
@@ -136,6 +154,24 @@ export function getMessageById(messageId, callback = null) {
       } else {
         callback(null, message);
       }
+    }
+  });
+}
+
+export function deleteMessage(messageId, callback = null) {
+  getMessageById(messageId, (err1) => {
+    if (err1 & callback) {
+      callback(err1);
+    } else {
+      Message.remove({ _id: messageId }, (err2) => {
+        if (callback) {
+          if (err2) {
+            callback(err2);
+          } else {
+            callback(null);
+          }
+        }
+      });
     }
   });
 }
@@ -180,6 +216,24 @@ export function getLogById(logId, callback = null) {
       } else {
         callback(null, log);
       }
+    }
+  });
+}
+
+export function deleteLog(logId, callback = null) {
+  getLogById(logId, (err1) => {
+    if (err1 & callback) {
+      callback(err1);
+    } else {
+      Log.remove({ _id: logId }, (err2) => {
+        if (callback) {
+          if (err2) {
+            callback(err2);
+          } else {
+            callback(null);
+          }
+        }
+      });
     }
   });
 }

@@ -90,6 +90,19 @@ describe('mongo', () => {
         });
       });
     });
+    describe('deleteUser()', () => {
+      it('should delete the user with the input id', (done) => {
+        db.createUser('test', (err, userRes) => {
+          db.deleteUser(userRes._id, (err2) => {
+            should.not.exist(err2);
+            db.getUsers((err3, usersRes) => {
+              usersRes.length.should.equal(0);
+              done();
+            });
+          });
+        });
+      });
+    });
     describe('createMessage()', () => {
       it('should add a new message to the database', (done) => {
         db.createUser('test', (err1, userRes) => {
@@ -129,6 +142,21 @@ describe('mongo', () => {
               should.not.exist(err3);
               msgRes2._id.toString().should.equal(msgRes1._id.toString());
               done();
+            });
+          });
+        });
+      });
+    });
+    describe('deleteMessage()', () => {
+      it('should delete the message with the input id', (done) => {
+        db.createUser('test', (err1, userRes) => {
+          db.createMessage(userRes._id, 'test message', (err2, msgRes) => {
+            db.deleteMessage(msgRes._id, (err3) => {
+              should.not.exist(err3);
+              db.getMessages((err4, msgsRes) => {
+                msgsRes.length.should.equal(0);
+                done();
+              });
             });
           });
         });
@@ -188,6 +216,23 @@ describe('mongo', () => {
                 should.not.exist(err4);
                 logRes2._id.toString().should.equal(logRes1._id.toString());
                 done();
+              });
+            });
+          });
+        });
+      });
+    });
+    describe('deleteLog()', () => {
+      it('should delete the log with the input id', (done) => {
+        db.createUser('test', (err1, userRes) => {
+          db.createMessage(userRes._id, 'test message', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'test log 1', (err3, logRes) => {
+              db.deleteLog(logRes._id, (err4) => {
+                should.not.exist(err4);
+                db.getLogs((err, logsRes) => {
+                  logsRes.length.should.equal(0);
+                  done();
+                });
               });
             });
           });
