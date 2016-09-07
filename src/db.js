@@ -47,7 +47,6 @@ export function dbGetUsers(callback = false) {
 /* eslint-disable array-callback-return */
   User.find((err, users) => {
 /* eslint-enable array-callback-return */
-
     if (callback) {
       if (err) {
         callback(err);
@@ -103,6 +102,20 @@ export function dbCreateMessage(userId, text, callback = false) {
   });
 }
 
+export function dbGetMessages(callback = false) {
+/* eslint-disable array-callback-return */
+  Message.find((err, messages) => {
+/* eslint-enable array-callback-return */
+    if (callback) {
+      if (err) {
+        callback(err);
+      } else {
+        callback(messages);
+      }
+    }
+  });
+}
+
 export function dbCreateLog(userIds, messageIds, callback = false) {
   const newLog = new Log({
     user_ids: userIds,
@@ -115,6 +128,20 @@ export function dbCreateLog(userIds, messageIds, callback = false) {
         callback(err);
       } else {
         callback(resLog);
+      }
+    }
+  });
+}
+
+export function dbGetLogs(callback = false) {
+/* eslint-disable array-callback-return */
+  Log.find((err, logs) => {
+/* eslint-enable array-callback-return */
+    if (callback) {
+      if (err) {
+        callback(err);
+      } else {
+        callback(logs);
       }
     }
   });
