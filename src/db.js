@@ -284,6 +284,28 @@ export function addMessageToLog(logId, newMessage, callback = null) {
   });
 }
 
+export function removeUserFromLog(logId, userId, callback = null) {
+  getLogById(logId, (err, logRes) => {
+    if (err && callback) {
+      callback(err, null);
+    } else {
+      logRes.user_ids.pull(userId);
+      callback(null, logRes);
+    }
+  });
+}
+
+export function removeMessageFromLog(logId, messageId, callback = null) {
+  getLogById(logId, (err, logRes) => {
+    if (err && callback) {
+      callback(err, null);
+    } else {
+      logRes.message_ids.pull(messageId);
+      callback(null, logRes);
+    }
+  });
+}
+
 export function deleteLog(logId, callback = null) {
   getLogById(logId, (err1) => {
     if (err1 & callback) {
