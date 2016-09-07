@@ -172,6 +172,34 @@ export function getMessageById(messageId, callback = null) {
   });
 }
 
+export function updateMessageText(messageId, newText, callback = null) {
+  const query = { _id: messageId };
+  const newData = { text: newText };
+  Message.update(query, newData, {}, (err, res) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, res);
+      }
+    }
+  });
+}
+
+export function updateMessageUser(messageId, newUser, callback = null) {
+  const query = { _id: messageId };
+  const newData = { user_id: newUser };
+  Message.update(query, newData, {}, (err, res) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, res);
+      }
+    }
+  });
+}
+
 export function deleteMessage(messageId, callback = null) {
   getMessageById(messageId, (err1) => {
     if (err1 & callback) {

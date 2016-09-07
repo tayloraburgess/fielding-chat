@@ -98,7 +98,7 @@ describe('mongo', () => {
       });
     });
     describe('updateUserName()', () => {
-      it('should update input user document with the input name', (done) => {
+      it('should update input User document with the input name', (done) => {
         db.createUser('first', (err1, userRes1) => {
           db.updateUserName(userRes1._id, 'second', (err2, res) => {
             should.not.exist(err2);
@@ -172,6 +172,40 @@ describe('mongo', () => {
           should.exist(err);
           should.not.exist(res);
           done();
+        });
+      });
+    });
+    describe('updateMessageText()', () => {
+      it('should update input Message document with the input text', (done) => {
+        db.createUser('first', (err1, userRes) => {
+          db.createMessage(userRes._id, 'test message', (err2, msgRes1) => {
+            db.updateMessageText(msgRes1._id, 'message 2', (err3, res) => {
+              should.not.exist(err3);
+              res.nModified.should.equal(1);
+              db.getMessageById(msgRes1._id, (err4, msgRes2) => {
+                msgRes2.text.should.equal('message 2');
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
+    describe('updateMessageUser()', () => {
+      it('should update input Message document with the input user', (done) => {
+        db.createUser('first', (err1, userRes1) => {
+          db.createMessage(userRes1._id, 'test message', (err2, msgRes1) => {
+            db.createUser('second', (err3, userRes2) => {
+              db.updateMessageUser(msgRes1._id, userRes2._id, (err4, res) => {
+                should.not.exist(err4);
+                res.nModified.should.equal(1);
+                db.getMessageById(msgRes1._id, (err5, msgRes2) => {
+                  msgRes2.user_id.toString().should.equal(userRes2._id.toString());
+                  done();
+                });
+              });
+            });
+          });
         });
       });
     });
