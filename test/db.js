@@ -291,6 +291,42 @@ describe('mongo', () => {
         });
       });
     });
+    describe('addUserToLog()', () => {
+      it('should update input Log document with a new user in user_ids', (done) => {
+        db.createUser('first', (err1, userRes1) => {
+          db.createMessage(userRes1._id, 'test message', (err2, msgRes) => {
+            db.createLog([userRes1._id], [msgRes._id], 'test log 1', (err3, logRes1) => {
+              db.createUser('second', (err4, userRes2) => {
+                db.addUserToLog(logRes1, userRes2, (err5, logRes2) => {
+                  should.not.exist(err5);
+                  logRes2.user_ids[0].toString().should.equal(userRes1._id.toString());
+                  logRes2.user_ids[1].toString().should.equal(userRes2._id.toString());
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+    describe('addMessageToLog()', () => {
+      it('should update input Log document with a new user in user_ids', (done) => {
+        db.createUser('first', (err1, userRes) => {
+          db.createMessage(userRes._id, 'test message', (err2, msgRes1) => {
+            db.createLog([userRes._id], [msgRes1._id], 'test log 1', (err3, logRes1) => {
+              db.createMessage(userRes._id, 'second message', (err4, msgRes2) => {
+                db.addMessageToLog(logRes1, msgRes2._id, (err5, logRes2) => {
+                  should.not.exist(err5);
+                  logRes2.message_ids[0].toString().should.equal(msgRes1._id.toString());
+                  logRes2.message_ids[1].toString().should.equal(msgRes2._id.toString());
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
     describe('deleteLog()', () => {
       it('should delete the log with the input id', (done) => {
         db.createUser('test', (err1, userRes) => {

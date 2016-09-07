@@ -262,6 +262,28 @@ export function getLogById(logId, callback = null) {
   });
 }
 
+export function addUserToLog(logId, newUser, callback = null) {
+  getLogById(logId, (err, logRes) => {
+    if (err && callback) {
+      callback(err, null);
+    } else {
+      logRes.user_ids.push(newUser);
+      callback(null, logRes);
+    }
+  });
+}
+
+export function addMessageToLog(logId, newMessage, callback = null) {
+  getLogById(logId, (err, logRes) => {
+    if (err && callback) {
+      callback(err, null);
+    } else {
+      logRes.message_ids.push(newMessage);
+      callback(null, logRes);
+    }
+  });
+}
+
 export function deleteLog(logId, callback = null) {
   getLogById(logId, (err1) => {
     if (err1 & callback) {
