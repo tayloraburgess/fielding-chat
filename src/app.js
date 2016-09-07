@@ -2,9 +2,13 @@
 
 import 'babel-polyfill';
 import express from 'express';
-// import * as db from '../src/db.js';
+import * as db from '../src/db.js';
 
 const app = express();
+db.connect('mongodb://localhost/fieldingchat');
+
+db.createUser('Taylor');
+db.createUser('Test');
 
 app.all('/api/v1', (req, res, next) => {
   if (req.method === 'GET') {
@@ -25,9 +29,11 @@ app.get('/api/v1', (req, res) => {
     .json({
       _links: {
         self: { href: '/api/v1' },
-        users: { href: '/api/v1/users' },
-        messages: { href: '/api/v1/messages' },
-        logs: { href: '/api/v1/logs' },
+        related: [ 
+          { href: '/api/v1/users' },
+          { href: '/api/v1/messages' },
+          { href: '/api/v1/logs' },
+        ],
       },
     });
   } else {
@@ -56,15 +62,21 @@ app.all('/api/v1/users', (req, res, next) => {
 });
 app.get('/api/v1/users', (req, res) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    res.status(200)
-    .set({
-      'Content-Type': 'application/hal+json',
-      Allow: 'GET, POST',
-    })
-    .json({
-      _links: {
-        self: { href: '/api/v1/users' },
-      },
+    db.getUsers((err, users) => {
+      const items = users.map((user) => {
+        return { href: `/api/v1/users/${user.name}`}
+      });
+      res.status(200)
+      .set({
+        'Content-Type': 'application/hal+json',
+        Allow: 'GET, POST',
+      })
+      .json({
+        _links: {
+          self: { href: '/api/v1/users' },
+          item: items,
+        },
+      });
     });
   } else {
     res.status(406)
@@ -92,15 +104,21 @@ app.all('/api/v1/messages', (req, res, next) => {
 });
 app.get('/api/v1/messages', (req, res) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    res.status(200)
-    .set({
-      'Content-Type': 'application/hal+json',
-      Allow: 'GET, POST',
-    })
-    .json({
-      _links: {
-        self: { href: '/api/v1/messages' },
-      },
+    db.getMessages((err, messages) => {
+      const items = messages.map((user) => {
+        return { href: `/api/v1/messages/${message.ref_id}`}
+      });
+      res.status(200)
+      .set({
+        'Content-Type': 'application/hal+json',
+        Allow: 'GET, POST',
+      })
+      .json({
+        _links: {
+          self: { href: '/api/v1/messages' },
+          item: items,
+        },
+      });
     });
   } else {
     res.status(406)
@@ -128,15 +146,21 @@ app.all('/api/v1/logs', (req, res, next) => {
 });
 app.get('/api/v1/logs', (req, res) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    res.status(200)
-    .set({
-      'Content-Type': 'application/hal+json',
-      Allow: 'GET, POST',
-    })
-    .json({
-      _links: {
-        self: { href: '/api/v1/logs' },
-      },
+    db.getLog((err, logs) => {
+      const items = logs.map((log) => {
+        return { href: `/api/v1/logs/${log.name}`}
+      });
+      res.status(200)
+      .set({
+        'Content-Type': 'application/hal+json',
+        Allow: 'GET, POST',
+      })
+      .json({
+        _links: {
+          self: { href: '/api/v1/logs' },
+          item: items,
+        },
+      });
     });
   } else {
     res.status(406)
