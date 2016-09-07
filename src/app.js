@@ -9,7 +9,7 @@ app.all('/api/v1', (req, res, next) => {
   if (req.method === 'GET') {
     next();
   } else {
-    const err = new Error('You cannot ${req.method} /api/v1. Try GET instead.');
+    const err = new Error(`You cannot ${req.method} /api/v1. Try GET instead.`);
     err.status = 405;
     next(err);
   }

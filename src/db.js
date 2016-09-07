@@ -1,7 +1,10 @@
 /* eslint-env node */
 
 import mongoose from 'mongoose';
-import { User } from '../src/models.js';
+import {
+  User,
+  Message,
+} from '../src/models.js';
 
 export function dbConnect(dbName, callback = false) {
   mongoose.connect(dbName, (err) => {
@@ -59,9 +62,8 @@ export function dbCreateUser(name, callback = false) {
     const filteredUsers = res.filter((user) => {
       if (user.name === name) {
         return user;
-      } else {
-        return false;
       }
+      return false;
     });
     if (filteredUsers.length === 0) {
       const newUser = new User({
@@ -77,9 +79,24 @@ export function dbCreateUser(name, callback = false) {
           }
         }
       });
-    } else {
-      if (callback) {
-        callback(false);
+    } else if (callback) {
+      callback(false);
+    }
+  });
+}
+
+export function dbCreateMessage(userId, text, callback = false) {
+  const newMessage = new Message({
+    user_id: userId,
+    text,
+    created_at: new Date(),
+  });
+  newMessage.save((err, resMessage) => {
+    if (callback) {
+      if (err) {
+        callback(err);
+      } else {
+        callback(resMessage);
       }
     }
   });

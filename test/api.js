@@ -84,7 +84,7 @@ function endpointMethods(endpoint, methods) {
   Object.keys(allMethods)
   .filter((method) => { return methods.indexOf(method) === -1 ? method : false; })
   .forEach((method) => {
-    it('should respond with status code 405 to ${method}', (done) => {
+    it(`should respond with status code 405 to ${method}`, (done) => {
       allMethods[method]
       .end((err) => {
         err.should.have.status(405);
