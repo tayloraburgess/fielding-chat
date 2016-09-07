@@ -7,9 +7,6 @@ import * as db from '../src/db.js';
 const app = express();
 db.connect('mongodb://localhost/fieldingchat');
 
-db.createUser('Taylor');
-db.createUser('Test');
-
 app.all('/api/v1', (req, res, next) => {
   if (req.method === 'GET') {
     next();
@@ -29,7 +26,7 @@ app.get('/api/v1', (req, res) => {
     .json({
       _links: {
         self: { href: '/api/v1' },
-        related: [ 
+        related: [
           { href: '/api/v1/users' },
           { href: '/api/v1/messages' },
           { href: '/api/v1/logs' },
@@ -64,7 +61,7 @@ app.get('/api/v1/users', (req, res) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getUsers((err, users) => {
       const items = users.map((user) => {
-        return { href: `/api/v1/users/${user.name}`}
+        return { href: `/api/v1/users/${user.name}` };
       });
       res.status(200)
       .set({
@@ -105,8 +102,8 @@ app.all('/api/v1/messages', (req, res, next) => {
 app.get('/api/v1/messages', (req, res) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getMessages((err, messages) => {
-      const items = messages.map((user) => {
-        return { href: `/api/v1/messages/${message.ref_id}`}
+      const items = messages.map((message) => {
+        return { href: `/api/v1/messages/${message.ref_id}` };
       });
       res.status(200)
       .set({
@@ -146,9 +143,9 @@ app.all('/api/v1/logs', (req, res, next) => {
 });
 app.get('/api/v1/logs', (req, res) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getLog((err, logs) => {
+    db.getLogs((err, logs) => {
       const items = logs.map((log) => {
-        return { href: `/api/v1/logs/${log.name}`}
+        return { href: `/api/v1/logs/${log.name}` };
       });
       res.status(200)
       .set({
