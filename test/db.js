@@ -7,6 +7,7 @@ import {
   dbCreateUser,
   dbGetUsers,
   dbCreateMessage,
+  dbCreateLog,
 } from '../src/db.js';
 
 const chaiHTTP = require('chai-http');
@@ -80,12 +81,33 @@ describe('Mongo', () => {
     describe('dbCreateMessage()', () => {
       it('should add a new message to the database', (done) => {
         dbCreateUser('test', (userRes) => {
-          dbCreateMessage(userRes._id, 'test message', (messageRes) => {
-            messageRes.should.have.property('user_id');
-            messageRes.user_id.should.equal(userRes._id);
-            messageRes.should.have.property('text');
-            messageRes.text.should.equal('test message');
+          dbCreateMessage(userRes._id, 'test message', (msgRes) => {
+            msgRes.should.have.property('user_id');
+            msgRes.user_id.should.equal(userRes._id);
+            msgRes.should.have.property('text');
+            msgRes.text.should.equal('test message');
             done();
+          });
+        });
+      });
+    });
+    describe('dbCreateLog()', () => {
+      it('should add a new log to the database', (done) => {
+        dbCreateUser('test1', (userRes1) => {
+          dbCreateUser('test2', (userRes2) => {
+            dbCreateMessage(userRes1._id, 'foo', (msgRes1) => {
+              dbCreateMessage(userRes2._id, 'foo', (msgRes2) => {
+                dbCreateLog([userRes1._id, userRes2._id], [msgRes1._id, msgRes2._id], (logRes) => {
+                  logRes.should.have.property('user_ids');
+                  logRes.user_ids[0].should.equal(userRes1._id);
+                  logRes.user_ids[1].should.equal(userRes2._id);
+                  logRes.should.have.property('message_ids');
+                  logRes.message_ids[0].should.equal(msgRes1._id);
+                  logRes.message_ids[1].should.equal(msgRes2._id);
+                  done();
+                });
+              });
+            });
           });
         });
       });

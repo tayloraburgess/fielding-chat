@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import {
   User,
   Message,
+  Log,
 } from '../src/models.js';
 
 export function dbConnect(dbName, callback = false) {
@@ -97,6 +98,23 @@ export function dbCreateMessage(userId, text, callback = false) {
         callback(err);
       } else {
         callback(resMessage);
+      }
+    }
+  });
+}
+
+export function dbCreateLog(userIds, messageIds, callback = false) {
+  const newLog = new Log({
+    user_ids: userIds,
+    message_ids: messageIds,
+    created_at: new Date(),
+  });
+  newLog.save((err, resLog) => {
+    if (callback) {
+      if (err) {
+        callback(err);
+      } else {
+        callback(resLog);
       }
     }
   });

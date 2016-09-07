@@ -16,7 +16,8 @@ const messageSchema = new mongoose.Schema({
 export const Message = mongoose.model('Message', messageSchema);
 
 const logSchema = new mongoose.Schema({
-  user_ids: [{ type: mongoose.Types.ObjectId, required: true }],
-  message_ids: [{ type: mongoose.Types.ObjectId, required: true }],
+  user_ids: [{ type: mongoose.Schema.Types.ObjectId, required: true }],
+  message_ids: [{ type: mongoose.Schema.Types.ObjectId, required: true }],
+  created_at: { type: Date, required: true },
 });
 export const Log = mongoose.model('Log', logSchema);
