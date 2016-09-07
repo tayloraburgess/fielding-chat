@@ -19,7 +19,7 @@
   "scripts": {
     "start": "babel-node src/app.js",
     "test": "mocha --compilers js:babel-register",
-    "lint": "eslint",
+    "lint": "eslint .",
     "build": "babel src -d lib",
     "serve": "node lib/app.js"
   },
@@ -34,6 +34,7 @@
   },
   "homepage": "https://github.com/tayloraburgess/fielding-chat#readme",
   "dependencies": {
-    "express": "^4.14.0"
+    "express": "^4.14.0",
+    "mongoose": "^4.6.0"
   }
 }
