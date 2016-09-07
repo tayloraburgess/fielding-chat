@@ -89,6 +89,13 @@ describe('mongo', () => {
           });
         });
       });
+      it('should pass an error to the callback if the user does not exist', (done) => {
+        db.getUserById('12345', (err, res) => {
+          should.exist(err);
+          should.not.exist(res);
+          done();
+        });
+      });
     });
     describe('deleteUser()', () => {
       it('should delete the user with the input id', (done) => {
@@ -144,6 +151,13 @@ describe('mongo', () => {
               done();
             });
           });
+        });
+      });
+      it('should pass an error to the callback if the message does not exist', (done) => {
+        db.getMessageById('12345', (err, res) => {
+          should.exist(err);
+          should.not.exist(res);
+          done();
         });
       });
     });
@@ -219,6 +233,13 @@ describe('mongo', () => {
               });
             });
           });
+        });
+      });
+      it('should pass an error to the callback if the log does not exist', (done) => {
+        db.getLogById('12345', (err, res) => {
+          should.exist(err);
+          should.not.exist(res);
+          done();
         });
       });
     });
