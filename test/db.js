@@ -4,20 +4,19 @@ import {
   dbConnect,
   dbDisconnect,
   dbCreateUser,
-  dbUserName,
-  dbGetUsers
+  dbGetUsers,
 } from '../src/db.js';
 
 const chaiHTTP = require('chai-http');
 
 chai.use(chaiHTTP);
-const should = chai.should();
+chai.should();
 
 describe('Mongo', () => {
   describe('dbConnect()', () => {
     it('should open a connection to the Mongo database', (done) => {
       dbConnect((res) => {
-        res.should.be.true;
+        res.should.equal(true);
         dbDisconnect();
         done();
       });
@@ -27,7 +26,7 @@ describe('Mongo', () => {
     it('should close the connection to the Mongo database', (done) => {
       dbConnect();
       dbDisconnect((res) => {
-        res.should.be.true;
+        res.should.equal(true);
         done();
       });
     });
@@ -36,12 +35,12 @@ describe('Mongo', () => {
 
 describe('User', () => {
   before('start database', (done) => {
-    dbConnect((res) => {
+    dbConnect(() => {
       done();
     });
   });
   after('close database', (done) => {
-    dbDisconnect((res) => {
+    dbDisconnect(() => {
       done();
     });
   });
@@ -58,7 +57,6 @@ describe('User', () => {
   describe('dbGetUsers()', () => {
     it('should get a list of users and pass them to the callback', (done) => {
       dbGetUsers((res) => {
-        console.log(res);
         res.should.be.a('array');
         done();
       });
