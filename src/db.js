@@ -97,6 +97,20 @@ export function createUser(name, callback = null) {
   });
 }
 
+export function updateUserName(userId, newName, callback = null) {
+  const query = { _id: userId };
+  const newData = { name: newName };
+  User.update(query, newData, {}, (err, res) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, res);
+      }
+    }
+  });
+}
+
 export function deleteUser(userId, callback = null) {
   getUserById(userId, (err1) => {
     if (err1 & callback) {

@@ -97,6 +97,20 @@ describe('mongo', () => {
         });
       });
     });
+    describe('updateUserName()', () => {
+      it('should update input user document with the input name', (done) => {
+        db.createUser('first', (err1, userRes1) => {
+          db.updateUserName(userRes1._id, 'second', (err2, res) => {
+            should.not.exist(err2);
+            res.nModified.should.equal(1);
+            db.getUserById(userRes1._id, (err3, userRes2) => {
+              userRes2.name.should.equal('second');
+              done();
+            });
+          });
+        });
+      });
+    });
     describe('deleteUser()', () => {
       it('should delete the user with the input id', (done) => {
         db.createUser('test', (err, userRes) => {
