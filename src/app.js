@@ -95,21 +95,14 @@ app.all('/api/v1/users/:name', (req, res, next) => {
 });
 app.get('/api/v1/users/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getUsers((err, users) => {
-      const filtUsers = users.filter((user) => {
-        if (user.name === req.params.name) {
-          return user;
-        }
-        return false;
-      });
-      if (filtUsers.length === 0) {
+    db.getUserByName(req.params.name, (err, user) => {
+      if (err) {
         const throwErr = new Error(`${req.params.name} isn't an existing user name.`);
         throwErr.custom = true;
         throwErr.status = 404;
         throwErr.methods = 'GET, PUT DELETE';
         next(throwErr);
       } else {
-        const user = filtUsers[0];
         db.getMessages((err2, messages) => {
           const messageItems = messages.filter((message) => {
             if (message.user_id.toString() === user._id.toString()) {
@@ -188,21 +181,14 @@ app.all('/api/v1/messages/:ref_id', (req, res, next) => {
 });
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getMessages((err, messages) => {
-      const filtMessages = messages.filter((message) => {
-        if (message.ref_id.toString() === req.params.ref_id.toString()) {
-          return message;
-        }
-        return false;
-      });
-      if (filtMessages.length === 0) {
+    db.getMessageByRefId(req.params.ref_id, (err, message) => {
+      if (err) {
         const throwErr = new Error(`${req.params.ref_id} isn't an existing message.`);
         throwErr.custom = true;
         throwErr.status = 404;
         throwErr.methods = 'GET, PUT DELETE';
         next(throwErr);
       } else {
-        const message = filtMessages[0];
         db.getUserById(message.user_id, (err2, userRes) => {
           db.getLogs((err3, logsRes) => {
             const logItems = logsRes.filter((log) => {
@@ -288,21 +274,14 @@ app.all('/api/v1/logs/:name', (req, res, next) => {
 });
 app.get('/api/v1/logs/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getLogs((err, logs) => {
-      const filtLogs = logs.filter((log) => {
-        if (log.name === req.params.name) {
-          return log;
-        }
-        return false;
-      });
-      if (filtLogs.length === 0) {
+    db.getLogByName(req.params.name, (err, log) => {
+      if (err) {
         const throwErr = new Error(`${req.params.name} isn't an existing log.`);
         throwErr.custom = true;
         throwErr.status = 404;
         throwErr.methods = 'GET, PUT DELETE';
         next(throwErr);
       } else {
-        const log = filtLogs[0];
         db.getUsers((err2, usersRes) => {
           db.getMessages((err3, msgsRes) => {
             const strMsgIds = log.message_ids.map((id) => {
