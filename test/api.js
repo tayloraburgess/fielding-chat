@@ -131,7 +131,7 @@ describe('API', () => {
     });
   });
 
-  beforeEach('drop database', (done) => {
+  beforeEach('populate database', (done) => {
     db.createUser(userNames[0], (err1, userRes1) => {
       db.createUser(userNames[1], (err2, userRes2) => {
         db.createMessage(userRes1._id, msgTexts[0], (err3, msgRes1) => {
@@ -175,6 +175,17 @@ describe('API', () => {
       badResource('/api/v1/users/');
       endpointMedia(`/api/v1/users/${userNames[0]}`);
       endpointIdempotent(`/api/v1/users/${userNames[0]}`);
+      it('should still send a correct represention even if the user name contains spaces', (done) => {
+        db.createUser('user 1', () => {
+          chai.request(app)
+          .get('/api/v1/users/user 1/')
+          .end((err, res) => {
+            should.not.exist(err);
+            res.status.should.equal(200);
+            done();
+          });
+        });
+      });
     });
   });
 
@@ -209,6 +220,17 @@ describe('API', () => {
       badResource('/api/v1/logs/');
       endpointMedia(`/api/v1/logs/${logNames[0]}`);
       endpointIdempotent(`/api/v1/logs/${logNames[0]}`);
+      it('should still send a correct represention even if the log name contains spaces', (done) => {
+        db.createLog([], [], 'log 1', () => {
+          chai.request(app)
+          .get('/api/v1/logs/log 1/')
+          .end((err, res) => {
+            should.not.exist(err);
+            res.status.should.equal(200);
+            done();
+          });
+        });
+      });
     });
   });
 });
