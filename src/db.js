@@ -69,6 +69,20 @@ export function getUserById(userId, callback = null) {
   });
 }
 
+export function getUserByName(name, callback = null) {
+  User.find({ name }, (err, user) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else if (user.length > 0) {
+        callback(null, user[0]);
+      } else {
+        callback(new Error(), null);
+      }
+    }
+  });
+}
+
 export function createUser(name, callback = null) {
   getUsers((err1, res) => {
     const filteredUsers = res.filter((user) => {
@@ -181,6 +195,20 @@ export function getMessageById(messageId, callback = null) {
   });
 }
 
+export function getMessageByRefId(refId, callback = null) {
+  Message.find({ ref_id: refId }, (err, message) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else if (message.length > 0) {
+        callback(null, message[0]);
+      } else {
+        callback(new Error(), null);
+      }
+    }
+  });
+}
+
 export function updateMessageText(messageId, newText, callback = null) {
   const query = { _id: messageId };
   const newData = { text: newText };
@@ -266,6 +294,20 @@ export function getLogById(logId, callback = null) {
         callback(err, null);
       } else {
         callback(null, log);
+      }
+    }
+  });
+}
+
+export function getLogByName(name, callback = null) {
+  Log.find({ name }, (err, log) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else if (log.length > 0) {
+        callback(null, log[0]);
+      } else {
+        callback(new Error(), null);
       }
     }
   });

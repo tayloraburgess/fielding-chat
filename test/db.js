@@ -18,6 +18,7 @@ describe('mongo', () => {
         db.disconnect();
       });
     });
+
     describe('disconnect()', () => {
       it('should close the connection to the Mongo database', (done) => {
         db.connect('mongodb://localhost/fielding_chat_test');
@@ -28,22 +29,26 @@ describe('mongo', () => {
       });
     });
   });
+
   describe('schema', () => {
     before('start database', (done) => {
       db.connect('mongodb://localhost/fielding_chat_test', () => {
         done();
       });
     });
+
     after('close database', (done) => {
       db.disconnect(() => {
         done();
       });
     });
+
     afterEach('drop database', (done) => {
       db.drop(() => {
         done();
       });
     });
+
     describe('createUser()', () => {
       it('should add a new user to the database', (done) => {
         db.createUser('user1', (err, res) => {
@@ -54,6 +59,7 @@ describe('mongo', () => {
           done();
         });
       });
+
       it('should only add a user if the name is not taken', (done) => {
         db.createUser('user1', (err1, res1) => {
           db.createUser('user1', (err2, res2) => {
@@ -64,6 +70,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('getUsers()', () => {
       it('should get a list of users and pass them to the callback', (done) => {
         db.createUser('user1', () => {
@@ -79,6 +86,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('getUserById()', () => {
       it('should get the user with the input id and pass it to the callback', (done) => {
         db.createUser('user1', (err1, userRes1) => {
@@ -89,6 +97,7 @@ describe('mongo', () => {
           });
         });
       });
+
       it('should pass an error to the callback if the user does not exist', (done) => {
         db.getUserById('12345', (err, res) => {
           should.exist(err);
@@ -97,6 +106,27 @@ describe('mongo', () => {
         });
       });
     });
+
+    describe('getUserByName()', () => {
+      it('should get the user with the input name and pass it to the callback', (done) => {
+        db.createUser('user1', (err1, userRes1) => {
+          db.getUserByName(userRes1.name, (err2, userRes2) => {
+            should.not.exist(err2);
+            userRes2._id.toString().should.equal(userRes1._id.toString());
+            done();
+          });
+        });
+      });
+
+      it('should pass an error to the callback if the user does not exist', (done) => {
+        db.getUserByName('user1', (err, res) => {
+          should.exist(err);
+          should.not.exist(res);
+          done();
+        });
+      });
+    });
+
     describe('updateUserName()', () => {
       it('should update input User document with the input name', (done) => {
         db.createUser('user1', (err1, userRes1) => {
@@ -111,6 +141,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('deleteUser()', () => {
       it('should delete the user with the input id', (done) => {
         db.createUser('user1', (err, userRes) => {
@@ -124,6 +155,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('createMessage()', () => {
       it('should add a new Message to the database', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -139,6 +171,7 @@ describe('mongo', () => {
           });
         });
       });
+
       it('should increment the ref_id of the new Message from the previous Message', (done) => {
         db.createUser('user1', (err1, userRes) => {
           db.createMessage(userRes._id, 'text1', () => {
@@ -151,6 +184,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('getMessages()', () => {
       it('should get a list of messages and pass them to the callback', (done) => {
         db.createUser('user1', (err1, userRes1) => {
@@ -168,6 +202,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('getMessageById()', () => {
       it('should get the message with the input id and pass it to the callback', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -180,6 +215,7 @@ describe('mongo', () => {
           });
         });
       });
+
       it('should pass an error to the callback if the message does not exist', (done) => {
         db.getMessageById('12345', (err, res) => {
           should.exist(err);
@@ -188,6 +224,29 @@ describe('mongo', () => {
         });
       });
     });
+
+    describe('getMessageByRefId()', () => {
+      it('should get the message with the input refId and pass it to the callback', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes1) => {
+            db.getMessageByRefId(msgRes1.ref_id, (err3, msgRes2) => {
+              should.not.exist(err3);
+              msgRes2._id.toString().should.equal(msgRes1._id.toString());
+              done();
+            });
+          });
+        });
+      });
+
+      it('should pass an error to the callback if the message does not exist', (done) => {
+        db.getMessageByRefId('1', (err, res) => {
+          should.exist(err);
+          should.not.exist(res);
+          done();
+        });
+      });
+    });
+
     describe('updateMessageText()', () => {
       it('should update input Message document with the input text', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -204,6 +263,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('updateMessageUser()', () => {
       it('should update input Message document with the input user', (done) => {
         db.createUser('user1', (err1, userRes1) => {
@@ -222,6 +282,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('deleteMessage()', () => {
       it('should delete the message with the input id', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -237,6 +298,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('createLog()', () => {
       it('should add a new log to the database', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -255,6 +317,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('getLogs()', () => {
       it('should get a list of logs and pass them to the callback', (done) => {
         db.createUser('user1', (err1, userRes1) => {
@@ -282,6 +345,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('getLogById()', () => {
       it('should get the log with the input id and pass it to the callback', (done) => {
         db.createUser('user2', (err1, userRes) => {
@@ -296,6 +360,7 @@ describe('mongo', () => {
           });
         });
       });
+
       it('should pass an error to the callback if the log does not exist', (done) => {
         db.getLogById('12345', (err, res) => {
           should.exist(err);
@@ -304,6 +369,31 @@ describe('mongo', () => {
         });
       });
     });
+
+    describe('getLogByName()', () => {
+      it('should get the log with the input name and pass it to the callback', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
+              db.getLogByName(logRes1.name, (err4, logRes2) => {
+                should.not.exist(err4);
+                logRes2._id.toString().should.equal(logRes1._id.toString());
+                done();
+              });
+            });
+          });
+        });
+      });
+
+      it('should pass an error to the callback if the log does not exist', (done) => {
+        db.getLogByName('log1', (err, res) => {
+          should.exist(err);
+          should.not.exist(res);
+          done();
+        });
+      });
+    });
+
     describe('updateLogName()', () => {
       it('should update input Log document with the input name', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -322,6 +412,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('addUserToLog()', () => {
       it('should update input Log document with a new user in user_ids', (done) => {
         db.createUser('user1', (err1, userRes1) => {
@@ -340,6 +431,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('removeUserFromLog()', () => {
       it('should update input Log document by removing the input User from user_ids', (done) => {
         db.createUser('user2', (err1, userRes) => {
@@ -355,6 +447,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('addMessageToLog()', () => {
       it('should update input Log document with a new user in user_ids', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -373,6 +466,7 @@ describe('mongo', () => {
         });
       });
     });
+
     describe('removeMessageFromLog()', () => {
       it('should update input Log document by removing the input User from user_ids', (done) => {
         db.createUser('user1', (err1, userRes) => {
