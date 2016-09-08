@@ -37,7 +37,7 @@ export function drop(callback = null) {
       if (err) {
         callback(err);
       } else {
-        callback(true);
+        callback(null);
       }
     }
   });
@@ -64,6 +64,20 @@ export function getUserById(userId, callback = null) {
         callback(err, null);
       } else {
         callback(null, user);
+      }
+    }
+  });
+}
+
+export function getUserByName(name, callback = null) {
+  User.find({ name }, (err, user) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else if (user.length > 0) {
+        callback(null, user[0]);
+      } else {
+        callback(new Error(), null);
       }
     }
   });
@@ -129,23 +143,6 @@ export function deleteUser(userId, callback = null) {
   });
 }
 
-export function createMessage(userId, text, callback = null) {
-  const newMessage = new Message({
-    user_id: userId,
-    text,
-    created_at: new Date(),
-  });
-  newMessage.save((err, resMessage) => {
-    if (callback) {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, resMessage);
-      }
-    }
-  });
-}
-
 export function getMessages(callback = null) {
 /* eslint-disable array-callback-return */
   Message.find((err, messages) => {
@@ -160,6 +157,32 @@ export function getMessages(callback = null) {
   });
 }
 
+export function createMessage(userId, text, callback = null) {
+  getMessages((err1, res) => {
+    let refId;
+    if (res.length === 0) {
+      refId = 1;
+    } else {
+      refId = res[res.length - 1].ref_id + 1;
+    }
+    const newMessage = new Message({
+      user_id: userId,
+      ref_id: refId,
+      text,
+      created_at: new Date(),
+    });
+    newMessage.save((err2, resMessage) => {
+      if (callback) {
+        if (err2) {
+          callback(err2, null);
+        } else {
+          callback(null, resMessage);
+        }
+      }
+    });
+  });
+}
+
 export function getMessageById(messageId, callback = null) {
   Message.findById(messageId, (err, message) => {
     if (callback) {
@@ -167,6 +190,20 @@ export function getMessageById(messageId, callback = null) {
         callback(err, null);
       } else {
         callback(null, message);
+      }
+    }
+  });
+}
+
+export function getMessageByRefId(refId, callback = null) {
+  Message.find({ ref_id: refId }, (err, message) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else if (message.length > 0) {
+        callback(null, message[0]);
+      } else {
+        callback(new Error(), null);
       }
     }
   });
@@ -257,6 +294,20 @@ export function getLogById(logId, callback = null) {
         callback(err, null);
       } else {
         callback(null, log);
+      }
+    }
+  });
+}
+
+export function getLogByName(name, callback = null) {
+  Log.find({ name }, (err, log) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else if (log.length > 0) {
+        callback(null, log[0]);
+      } else {
+        callback(new Error(), null);
       }
     }
   });
