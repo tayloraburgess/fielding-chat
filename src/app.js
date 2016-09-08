@@ -4,11 +4,16 @@ import 'babel-polyfill';
 import express from 'express';
 import * as db from '../src/db.js';
 
-function error406(methods, next) {
-  const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-  throwErr.custom = true;
-  throwErr.status = 406;
+function customError(status, methods, next, body) {
+  let throwErr;
+  if (status === 406) {
+    throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+  } else {
+    throwErr = new Error(body);
+  }
+  throwErr.status = status;
   throwErr.methods = methods;
+  throwErr.custom = true;
   next(throwErr);
 }
 
@@ -44,7 +49,7 @@ app.get('/api/v1', (req, res, next) => {
       },
     });
   } else {
-    error406('GET', next);
+    customError(406, 'GET', next);
   }
 });
 
@@ -78,7 +83,7 @@ app.get('/api/v1/users', (req, res, next) => {
       });
     });
   } else {
-    error406('GET, POST', next);
+    customError(406, 'GET, POST', next);
   }
 });
 
@@ -130,7 +135,7 @@ app.get('/api/v1/users/:name', (req, res, next) => {
       }
     });
   } else {
-    error406('GET, PUT DELETE', next);
+    customError(406, 'GET, PUT DELETE', next);
   }
 });
 
@@ -164,7 +169,7 @@ app.get('/api/v1/messages', (req, res, next) => {
       });
     });
   } else {
-    error406('GET, POST', next);
+    customError(406, 'GET, POST', next);
   }
 });
 
@@ -223,7 +228,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
       }
     });
   } else {
-    error406('GET, PUT DELETE', next);
+    customError(406, 'GET, PUT DELETE', next);
   }
 });
 
@@ -257,7 +262,7 @@ app.get('/api/v1/logs', (req, res, next) => {
       });
     });
   } else {
-    error406('GET, POST', next);
+    customError(406, 'GET, POST', next);
   }
 });
 
@@ -336,7 +341,7 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
       }
     });
   } else {
-    error406('GET, PUT DELETE', next);
+    customError(406, 'GET, PUT DELETE', next);
   }
 });
 
