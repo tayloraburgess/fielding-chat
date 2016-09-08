@@ -4,6 +4,14 @@ import 'babel-polyfill';
 import express from 'express';
 import * as db from '../src/db.js';
 
+function error406(methods, next) {
+  const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+  throwErr.custom = true;
+  throwErr.status = 406;
+  throwErr.methods = methods;
+  next(throwErr);
+}
+
 const app = express();
 db.connect('mongodb://localhost/fieldingchat');
 
@@ -36,11 +44,7 @@ app.get('/api/v1', (req, res, next) => {
       },
     });
   } else {
-    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-    throwErr.custom = true;
-    throwErr.status = 406;
-    throwErr.methods = 'GET';
-    next(throwErr);
+    error406('GET', next);
   }
 });
 
@@ -74,11 +78,7 @@ app.get('/api/v1/users', (req, res, next) => {
       });
     });
   } else {
-    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-    throwErr.custom = true;
-    throwErr.status = 406;
-    throwErr.methods = 'GET, POST';
-    next(throwErr);
+    error406('GET, POST', next);
   }
 });
 
@@ -137,11 +137,7 @@ app.get('/api/v1/users/:name', (req, res, next) => {
       }
     });
   } else {
-    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-    throwErr.custom = true;
-    throwErr.status = 406;
-    throwErr.methods = 'GET, PUT DELETE';
-    next(throwErr);
+    error406('GET, PUT DELETE', next);
   }
 });
 
@@ -175,11 +171,7 @@ app.get('/api/v1/messages', (req, res, next) => {
       });
     });
   } else {
-    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-    throwErr.custom = true;
-    throwErr.status = 406;
-    throwErr.methods = 'GET, POST';
-    next(throwErr);
+    error406('GET, POST', next);
   }
 });
 
@@ -245,11 +237,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
       }
     });
   } else {
-    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-    throwErr.custom = true;
-    throwErr.status = 406;
-    throwErr.methods = 'GET, PUT DELETE';
-    next(throwErr);
+    error406('GET, PUT DELETE', next);
   }
 });
 
@@ -283,11 +271,7 @@ app.get('/api/v1/logs', (req, res, next) => {
       });
     });
   } else {
-    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-    throwErr.custom = true;
-    throwErr.status = 406;
-    throwErr.methods = 'GET, POST';
-    next(throwErr);
+    error406('GET, POST', next);
   }
 });
 
@@ -373,11 +357,7 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
       }
     });
   } else {
-    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-    throwErr.custom = true;
-    throwErr.status = 406;
-    throwErr.methods = 'GET, PUT DELETE';
-    next(throwErr);
+    error406('GET, PUT DELETE', next);
   }
 });
 
