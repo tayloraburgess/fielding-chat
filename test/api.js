@@ -81,12 +81,11 @@ function endpointIdempotent(endpoint) {
 
 function badResource(endpoint) {
   it('should respond with 404 if the resource does not exist', (done) => {
-
     chai.request(app)
     .get(`${endpoint}${randomString(25)}`)
     .end((err, res) => {
-      //should.not.exist(res);
-      res.status.should.equal(404);
+      should.exist(err);
+      err.status.should.equal(404);
       done();
     });
   });

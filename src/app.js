@@ -110,14 +110,14 @@ app.get('/api/v1/users/:name', (req, res, next) => {
         next(throwErr);
       } else {
         const user = filtUsers[0];
-        db.getMessages((err, messages) => {
+        db.getMessages((err2, messages) => {
           const messageItems = messages.filter((message) => {
             if (message.user_id.toString() === user._id.toString()) {
               return message;
             }
             return false;
           }).map((message) => {
-            return { href: `/api/v1/messages/${message.ref_id}`}
+            return { href: `/api/v1/messages/${message.ref_id}` };
           });
           res.status(200)
           .set({
@@ -178,7 +178,7 @@ app.get('/api/v1/messages', (req, res, next) => {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
     throwErr.custom = true;
     throwErr.status = 406;
-    throwErr.methods = 'GET, POST'
+    throwErr.methods = 'GET, POST';
     next(throwErr);
   }
 });
@@ -190,7 +190,7 @@ app.all('/api/v1/messages/:ref_id', (req, res, next) => {
     const throwErr = new Error(`You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
     throwErr.custom = true;
     throwErr.status = 405;
-    throwErr.methods = 'GET, PUT, DELETE'
+    throwErr.methods = 'GET, PUT, DELETE';
     next(throwErr);
   }
 });
@@ -211,9 +211,9 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
         next(throwErr);
       } else {
         const message = filtMessages[0];
-        db.getUserById(message.user_id, (err, userRes) => {
-          db.getLogs((err, logsRes) => {
-            let logItems = logsRes.filter((log) => {
+        db.getUserById(message.user_id, (err2, userRes) => {
+          db.getLogs((err3, logsRes) => {
+            const logItems = logsRes.filter((log) => {
               const strMsgIds = log.message_ids.map((id) => {
                 return id.toString();
               });
@@ -224,7 +224,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
             }).map((log) => {
               return { href: `/api/v1/logs/${log.name}` };
             });
-            logItems.unshift( { href: 'api/v1/messages' } );
+            logItems.unshift({ href: 'api/v1/messages' });
             res.status(200)
             .set({
               'Content-Type': 'application/hal+json',
@@ -260,7 +260,7 @@ app.all('/api/v1/logs', (req, res, next) => {
     const throwErr = new Error(`You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
     throwErr.custom = true;
     throwErr.status = 405;
-    throwErr.methods = 'GET, POST'
+    throwErr.methods = 'GET, POST';
     next(throwErr);
   }
 });
@@ -286,7 +286,7 @@ app.get('/api/v1/logs', (req, res, next) => {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
     throwErr.custom = true;
     throwErr.status = 406;
-    throwErr.methods = 'GET, POST'
+    throwErr.methods = 'GET, POST';
     next(throwErr);
   }
 });
@@ -319,8 +319,8 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
         next(throwErr);
       } else {
         const log = filtLogs[0];
-        db.getUsers((err, usersRes) => {
-          db.getMessages((err, msgsRes) => {
+        db.getUsers((err2, usersRes) => {
+          db.getMessages((err3, msgsRes) => {
             const strMsgIds = log.message_ids.map((id) => {
               return id.toString();
             });
@@ -384,10 +384,9 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
 /* eslint-enable no-unused-vars*/
-  if (res.headersSent || !(err.hasOwnProperty('custom'))) {
+  if (res.headersSent || !('custom' in err)) {
     next(err);
-  }
-  else {
+  } else {
     res.status(err.status)
     .set({
       Allow: err.methods,
