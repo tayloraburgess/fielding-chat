@@ -24,11 +24,7 @@ app.all('/api/v1', (req, res, next) => {
   if (req.method === 'GET') {
     next();
   } else {
-    const throwErr = new Error(`You cannot ${req.method} /api/v1. Try GET instead.`);
-    throwErr.custom = true;
-    throwErr.status = 405;
-    throwErr.methods = 'GET';
-    next(throwErr);
+    customError(405, 'GET', next, `You cannot ${req.method} /api/v1. Try GET instead.`);
   }
 });
 app.get('/api/v1', (req, res, next) => {
@@ -57,11 +53,7 @@ app.all('/api/v1/users', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    const throwErr = new Error(`You cannot ${req.method} /api/v1/users. Try GET or POST instead.`);
-    throwErr.custom = true;
-    throwErr.status = 405;
-    throwErr.methods = 'GET, POST';
-    next(throwErr);
+    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/users. Try GET or POST instead.`);
   }
 });
 app.get('/api/v1/users', (req, res, next) => {
@@ -91,11 +83,7 @@ app.all('/api/v1/users/:name', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const throwErr = new Error(`You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
-    throwErr.custom = true;
-    throwErr.status = 405;
-    throwErr.methods = 'GET, PUT DELETE';
-    next(throwErr);
+    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
   }
 });
 app.get('/api/v1/users/:name', (req, res, next) => {
@@ -143,11 +131,7 @@ app.all('/api/v1/messages', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    const throwErr = new Error(`You cannot ${req.method} /api/v1/messages. Try GET or POST instead.`);
-    throwErr.custom = true;
-    throwErr.status = 405;
-    throwErr.methods = 'GET, POST';
-    next(throwErr);
+    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/messages. Try GET or POST instead.`);
   }
 });
 app.get('/api/v1/messages', (req, res, next) => {
@@ -177,11 +161,7 @@ app.all('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const throwErr = new Error(`You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
-    throwErr.custom = true;
-    throwErr.status = 405;
-    throwErr.methods = 'GET, PUT, DELETE';
-    next(throwErr);
+    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
   }
 });
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
@@ -236,11 +216,7 @@ app.all('/api/v1/logs', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    const throwErr = new Error(`You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
-    throwErr.custom = true;
-    throwErr.status = 405;
-    throwErr.methods = 'GET, POST';
-    next(throwErr);
+    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
   }
 });
 app.get('/api/v1/logs', (req, res, next) => {
@@ -270,11 +246,7 @@ app.all('/api/v1/logs/:name', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const throwErr = new Error(`You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
-    throwErr.custom = true;
-    throwErr.status = 405;
-    throwErr.methods = 'GET, PUT DELETE';
-    next(throwErr);
+    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
   }
 });
 app.get('/api/v1/logs/:name', (req, res, next) => {
