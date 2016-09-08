@@ -53,7 +53,7 @@ app.all('/api/v1/users', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/users. Try GET or POST instead.`);
+    customError(405, 'GET, POST', next, `You cannot ${req.method} /api/v1/users. Try GET or POST instead.`);
   }
 });
 app.get('/api/v1/users', (req, res, next) => {
@@ -83,18 +83,14 @@ app.all('/api/v1/users/:name', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
+    customError(405, 'GET, PUT, DELETE', next, `You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
   }
 });
 app.get('/api/v1/users/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getUserByName(req.params.name, (err, user) => {
       if (err) {
-        const throwErr = new Error(`${req.params.name} isn't an existing user name.`);
-        throwErr.custom = true;
-        throwErr.status = 404;
-        throwErr.methods = 'GET, PUT DELETE';
-        next(throwErr);
+        customError(404, 'GET, PUT DELETE', next, `${req.params.name} isn't an existing log.`);
       } else {
         db.getMessages((err2, messages) => {
           const messageItems = messages.filter((message) => {
@@ -131,7 +127,7 @@ app.all('/api/v1/messages', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/messages. Try GET or POST instead.`);
+    customError(405, 'GET, POST', next, `You cannot ${req.method} /api/v1/messages. Try GET or POST instead.`);
   }
 });
 app.get('/api/v1/messages', (req, res, next) => {
@@ -161,18 +157,14 @@ app.all('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
+    customError(405, 'GET, PUT, DELETE', next, `You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
   }
 });
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getMessageByRefId(req.params.ref_id, (err, message) => {
       if (err) {
-        const throwErr = new Error(`${req.params.ref_id} isn't an existing message.`);
-        throwErr.custom = true;
-        throwErr.status = 404;
-        throwErr.methods = 'GET, PUT DELETE';
-        next(throwErr);
+        customError(404, 'GET, PUT DELETE', next, `${req.params.ref_id} isn't an existing log.`);
       } else {
         db.getUserById(message.user_id, (err2, userRes) => {
           db.getLogs((err3, logsRes) => {
@@ -216,7 +208,7 @@ app.all('/api/v1/logs', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
+    customError(405, 'GET, POST', next, `You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
   }
 });
 app.get('/api/v1/logs', (req, res, next) => {
@@ -246,18 +238,14 @@ app.all('/api/v1/logs/:name', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    customError(405, 'GET', next, `You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
+    customError(405, 'GET, PUT, DELETE', next, `You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
   }
 });
 app.get('/api/v1/logs/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getLogByName(req.params.name, (err, log) => {
       if (err) {
-        const throwErr = new Error(`${req.params.name} isn't an existing log.`);
-        throwErr.custom = true;
-        throwErr.status = 404;
-        throwErr.methods = 'GET, PUT DELETE';
-        next(throwErr);
+        customError(404, 'GET, PUT DELETE', next, `${req.params.name} isn't an existing log.`);
       } else {
         db.getUsers((err2, usersRes) => {
           db.getMessages((err3, msgsRes) => {
