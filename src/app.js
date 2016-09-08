@@ -311,6 +311,98 @@ app.use((err, req, res, next) => {
   .send(err.message);
 });
 
+app.all('/api/v1/logs/:name', (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'POST') {
+    next();
+  } else {
+    const err = new Error(`You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET or POST instead.`);
+    err.status = 405;
+    next(err);
+  }
+});
+app.get('/api/v1/logs/:name', (req, res, next) => {
+  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
+    db.getLogs((err, logs) => {
+      const filtLogs = logs.filter((log) => {
+        if (log.name === req.params.name) {
+          return log;
+        }
+        return false;
+      });
+      if (filtLogs.length === 0) {
+        const err = new Error(`${req.params.name} isn't an existing log.`);
+        err.status = 404;
+        next(err);
+      } else {
+        const log = filtLogs[0];
+        db.getUsers((err, usersRes) => {
+          db.getMessages((err, msgsRes) => {
+            const strMsgIds = log.message_ids.map((id) => {
+              return id.toString();
+            });
+            const strUserIds = log.user_ids.map((id) => {
+              return id.toString();
+            });
+            const msgItems = msgsRes.filter((message) => {
+              if (strMsgIds.indexOf(message._id.toString()) > -1) {
+                return message;
+              }
+              return false;
+            }).map((message) => {
+              return message.ref_id.toString();
+            });
+            const userItems = usersRes.filter((user) => {
+              if (strUserIds.indexOf(user._id.toString()) > -1) {
+                return user;
+              }
+              return false;
+            }).map((user) => {
+              return user.name;
+            });
+
+            const items = userItems.map((user) => {
+              return { href: `/api/v1/users/${user}` };
+            }).concat(
+              msgItems.map((msg) => {
+                return { href: `/api/v1/messages/${msg}` };
+              })
+            );
+
+            res.status(200)
+            .set({
+              'Content-Type': 'application/hal+json',
+              Allow: 'GET, POST',
+            })
+            .json({
+              _links: {
+                self: { href: `/api/v1/logs/${req.params.name}` },
+                collection: { href: 'api/v1/logs' },
+                related: items,
+              },
+              name: log.name,
+              users: userItems,
+              messages: msgItems,
+              createdAt: log.created_at,
+            });
+          });
+        });
+      }
+    });
+  } else {
+    res.status(406)
+    .end();
+  }
+});
+/* eslint-disable no-unused-vars */
+app.use((err, req, res, next) => {
+/* eslint-enable no-unused-vars*/
+  res.status(err.status)
+  .set({
+    Allow: 'GET, POST',
+  })
+  .send(err.message);
+});
+
 app.listen(5000);
 
 export default app;
