@@ -9,6 +9,13 @@ const chaiHTTP = require('chai-http');
 chai.use(chaiHTTP);
 const should = chai.should();
 
+function randomString(stringLength = 75) {
+  const possible = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n\t !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
+  return Array(stringLength).fill('').map(() => {
+    return possible.charAt(Math.random() * (possible.length - 1));
+  }).join('');
+}
+
 function endpointMedia(endpoint) {
   it('should be able to respond with a body of type application/hal+json', (done) => {
     chai.request(app)
@@ -72,6 +79,19 @@ function endpointIdempotent(endpoint) {
   });
 }
 
+function badResource(endpoint) {
+  it('should respond with 404 if the resource does not exist', (done) => {
+
+    chai.request(app)
+    .get(`${endpoint}${randomString(25)}`)
+    .end((err, res) => {
+      //should.not.exist(res);
+      res.status.should.equal(404);
+      done();
+    });
+  });
+}
+
 function endpointMethods(endpoint, methods) {
   const allMethods = {
     OPTIONS: chai.request(app).options(endpoint),
@@ -110,6 +130,12 @@ describe('/api/v1/users', () => {
   });
 });
 
+describe('/api/v1/users/:name', () => {
+  describe('GET', () => {
+    badResource('/api/v1/users/');
+  });
+});
+
 describe('/api/v1/messages', () => {
   endpointMethods('/api/v1/messages/', ['GET', 'POST']);
   describe('GET', () => {
@@ -118,10 +144,22 @@ describe('/api/v1/messages', () => {
   });
 });
 
+describe('/api/v1/messages/:ref_id', () => {
+  describe('GET', () => {
+    badResource('/api/v1/messages/');
+  });
+});
+
 describe('/api/v1/logs', () => {
   endpointMethods('/api/v1/logs/', ['GET', 'POST']);
   describe('GET', () => {
     endpointMedia('/api/v1/logs');
     endpointIdempotent('/api/v1/logs');
+  });
+});
+
+describe('/api/v1/logs/:name', () => {
+  describe('GET', () => {
+    badResource('/api/v1/logs/');
   });
 });

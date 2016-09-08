@@ -13,6 +13,7 @@ app.all('/api/v1', (req, res, next) => {
   } else {
     const err = new Error(`You cannot ${req.method} /api/v1. Try GET instead.`);
     err.status = 405;
+    err.methods = 'GET'
     next(err);
   }
 });
@@ -43,7 +44,7 @@ app.use((err, req, res, next) => {
 /* eslint-enable no-unused-vars*/
   res.status(err.status)
   .set({
-    Allow: 'GET',
+    Allow: err.methods,
   })
   .send(err.message);
 });
