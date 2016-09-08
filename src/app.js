@@ -23,10 +23,12 @@ const app = express();
 db.connect('mongodb://localhost/fieldingchat');
 
 app.all('/api/v1', (req, res, next) => {
-  if (req.method === 'GET') {
+  res.locals.methods = ['GET'];
+  res.locals.methodsString = res.locals.methods.join(', ');
+  if (res.locals.methods.indexOf(req.method) > -1) {
     next();
   } else {
-    customError(405, 'GET', next, `You cannot ${req.method} /api/v1. Try GET instead.`);
+    customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1. Try ${res.locals.methodsString} instead.`);
   }
 });
 app.get('/api/v1', (req, res, next) => {
@@ -34,7 +36,7 @@ app.get('/api/v1', (req, res, next) => {
     res.status(200)
     .set({
       'Content-Type': 'application/hal+json',
-      Allow: 'GET',
+      Allow: res.locals.methodsString,
     })
     .json({
       _links: {
@@ -47,22 +49,24 @@ app.get('/api/v1', (req, res, next) => {
       },
     });
   } else {
-    customError(406, 'GET', next);
+    customError(406, res.locals.methodsString, next);
   }
 });
 
 app.all('/api/v1/users', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'POST') {
+  res.locals.methods = ['GET', 'POST'];
+  res.locals.methodsString = res.locals.methods.join(', ');
+  if (res.locals.methods.indexOf(req.method) > -1) {
     next();
   } else {
-    customError(405, 'GET, POST', next, `You cannot ${req.method} /api/v1/users. Try GET or POST instead.`);
+    customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/users. Try ${res.locals.methodsString} instead.`);
   }
 });
 app.get('/api/v1/users', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getUsers((err, users) => {
       if (err) {
-        customError(500, 'GET, POST', next);
+        customError(500, res.locals.methodsString, next);
       } else {
         const items = users.map((user) => {
           return { href: `/api/v1/users/${user.name}` };
@@ -70,7 +74,7 @@ app.get('/api/v1/users', (req, res, next) => {
         res.status(200)
         .set({
           'Content-Type': 'application/hal+json',
-          Allow: 'GET, POST',
+          Allow: res.locals.methodsString,
         })
         .json({
           _links: {
@@ -81,26 +85,28 @@ app.get('/api/v1/users', (req, res, next) => {
       }
     });
   } else {
-    customError(406, 'GET, POST', next);
+    customError(406, res.locals.methodsString, next);
   }
 });
 
 app.all('/api/v1/users/:name', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
+  res.locals.methods = ['GET', 'PUT', 'DELETE'];
+  res.locals.methodsString = res.locals.methods.join(', ');
+  if (res.locals.methods.indexOf(req.method) > -1) {
     next();
   } else {
-    customError(405, 'GET, PUT, DELETE', next, `You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
+    customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/users/${req.params.name}. Try ${res.locals.methodsString} instead.`);
   }
 });
 app.get('/api/v1/users/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getUserByName(req.params.name, (err, user) => {
       if (err) {
-        customError(404, 'GET, PUT, DELETE', next, `${req.params.name} isn't an existing log.`);
+        customError(404, res.locals.methodsString, next, `${req.params.name} isn't an existing log.`);
       } else {
         db.getMessages((err2, messages) => {
           if (err2) {
-            customError(500, 'GET, PUT, DELETE', next);
+            customError(500, res.locals.methodsString, next);
           } else {
             const messageItems = messages.filter((message) => {
               if (message.user_id.toString() === user._id.toString()) {
@@ -113,7 +119,7 @@ app.get('/api/v1/users/:name', (req, res, next) => {
             res.status(200)
             .set({
               'Content-Type': 'application/hal+json',
-              Allow: 'GET, PUT, DELETE',
+              Allow: res.locals.methodsString,
             })
             .json({
               _links: {
@@ -129,22 +135,24 @@ app.get('/api/v1/users/:name', (req, res, next) => {
       }
     });
   } else {
-    customError(406, 'GET, PUT DELETE', next);
+    customError(406, res.locals.methodsString, next);
   }
 });
 
 app.all('/api/v1/messages', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'POST') {
+  res.locals.methods = ['GET', 'POST'];
+  res.locals.methodsString = res.locals.methods.join(', ');
+  if (res.locals.methods.indexOf(req.method) > -1) {
     next();
   } else {
-    customError(405, 'GET, POST', next, `You cannot ${req.method} /api/v1/messages. Try GET or POST instead.`);
+    customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/messages. Try ${res.locals.methodsString} instead.`);
   }
 });
 app.get('/api/v1/messages', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getMessages((err, messages) => {
       if (err) {
-        customError(500, 'GET, POST', next);
+        customError(500, res.locals.methodsString, next);
       } else {
         const items = messages.map((message) => {
           return { href: `/api/v1/messages/${message.ref_id}` };
@@ -152,7 +160,7 @@ app.get('/api/v1/messages', (req, res, next) => {
         res.status(200)
         .set({
           'Content-Type': 'application/hal+json',
-          Allow: 'GET, POST',
+          Allow: res.locals.methodsString,
         })
         .json({
           _links: {
@@ -163,30 +171,32 @@ app.get('/api/v1/messages', (req, res, next) => {
       }
     });
   } else {
-    customError(406, 'GET, POST', next);
+    customError(406, res.locals.methodsString, next);
   }
 });
 
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
+  res.locals.methods = ['GET', 'PUT', 'DELETE'];
+  res.locals.methodsString = res.locals.methods.join(', ');
+  if (res.locals.methods.indexOf(req.method) > -1) {
     next();
   } else {
-    customError(405, 'GET, PUT, DELETE', next, `You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
+    customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try ${res.locals.methodsString} instead.`);
   }
 });
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getMessageByRefId(req.params.ref_id, (err, message) => {
       if (err) {
-        customError(404, 'GET, PUT DELETE', next, `${req.params.ref_id} isn't an existing log.`);
+        customError(404, res.locals.methodsString, next, `${req.params.ref_id} isn't an existing log.`);
       } else {
         db.getUserById(message.user_id, (err2, userRes) => {
           if (err2) {
-            customError(500, 'GET, PUT, DELETE', next);
+            customError(500, res.locals.methodsString, next);
           } else {
             db.getLogs((err3, logsRes) => {
               if (err3) {
-                customError(500, 'GET, PUT, DELETE', next);
+                customError(500, res.locals.methodsString, next);
               } else {
                 const logItems = logsRes.filter((log) => {
                   const strMsgIds = log.message_ids.map((id) => {
@@ -203,7 +213,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
                 res.status(200)
                 .set({
                   'Content-Type': 'application/hal+json',
-                  Allow: 'GET, PUT, DELETE',
+                  Allow: res.locals.methodsString,
                 })
                 .json({
                   _links: {
@@ -222,22 +232,24 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
       }
     });
   } else {
-    customError(406, 'GET, PUT DELETE', next);
+    customError(406, res.locals.methodsString, next);
   }
 });
 
 app.all('/api/v1/logs', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'POST') {
+  res.locals.methods = ['GET', 'POST'];
+  res.locals.methodsString = res.locals.methods.join(', ');
+  if (res.locals.methods.indexOf(req.method) > -1) {
     next();
   } else {
-    customError(405, 'GET, POST', next, `You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
+    customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/logs. Try ${res.locals.methodsString} instead.`);
   }
 });
 app.get('/api/v1/logs', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getLogs((err, logs) => {
       if (err) {
-        customError(500, 'GET, POST', next);
+        customError(500, res.locals.methodsString, next);
       } else {
         const items = logs.map((log) => {
           return { href: `/api/v1/logs/${log.name}` };
@@ -245,7 +257,7 @@ app.get('/api/v1/logs', (req, res, next) => {
         res.status(200)
         .set({
           'Content-Type': 'application/hal+json',
-          Allow: 'GET, POST',
+          Allow: res.locals.methodsString,
         })
         .json({
           _links: {
@@ -256,30 +268,32 @@ app.get('/api/v1/logs', (req, res, next) => {
       }
     });
   } else {
-    customError(406, 'GET, POST', next);
+    customError(406, res.locals.methodsString, next);
   }
 });
 
 app.all('/api/v1/logs/:name', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
+  res.locals.methods = ['GET', 'PUT', 'DELETE'];
+  res.locals.methodsString = res.locals.methods.join(', ');
+  if (res.locals.methods.indexOf(req.method) > -1) {
     next();
   } else {
-    customError(405, 'GET, PUT, DELETE', next, `You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
+    customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try ${res.locals.methodsString} instead.`);
   }
 });
 app.get('/api/v1/logs/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getLogByName(req.params.name, (err, log) => {
       if (err) {
-        customError(404, 'GET, PUT DELETE', next, `${req.params.name} isn't an existing log.`);
+        customError(404, res.locals.methodsString, next, `${req.params.name} isn't an existing log.`);
       } else {
         db.getUsers((err2, usersRes) => {
           if (err2) {
-            customError(500, 'GET, PUT, DELETE', next);
+            customError(500, res.locals.methodsString, next);
           } else {
             db.getMessages((err3, msgsRes) => {
               if (err3) {
-                customError(500, 'GET, PUT, DELETE', next);
+                customError(500, res.locals.methodsString, next);
               } else {
                 const strMsgIds = log.message_ids.map((id) => {
                   return id.toString();
@@ -315,7 +329,7 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
                 res.status(200)
                 .set({
                   'Content-Type': 'application/hal+json',
-                  Allow: 'GET, POST',
+                  Allow: res.locals.methodsString,
                 })
                 .json({
                   _links: {
@@ -335,7 +349,7 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
       }
     });
   } else {
-    customError(406, 'GET, PUT DELETE', next);
+    customError(406, res.locals.methodsString, next);
   }
 });
 

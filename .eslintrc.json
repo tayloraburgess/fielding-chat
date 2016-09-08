@@ -15,6 +15,7 @@
    	],
     "no-underscore-dangle": "off",
     "arrow-body-style": [ "error", "always"],
-    "max-len": "off"
+    "max-len": "off",
+    "no-param-reassign": "off"
   }
 }
