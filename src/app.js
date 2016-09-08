@@ -91,10 +91,10 @@ app.use((err, req, res, next) => {
 });
 
 app.all('/api/v1/users/:name', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'POST') {
+  if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET or POST instead.`);
+    const err = new Error(`You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
     err.status = 405;
     next(err);
   }
@@ -126,7 +126,7 @@ app.get('/api/v1/users/:name', (req, res, next) => {
           res.status(200)
           .set({
             'Content-Type': 'application/hal+json',
-            Allow: 'GET, POST',
+            Allow: 'GET, PUT, DELETE',
           })
           .json({
             _links: {
@@ -150,7 +150,7 @@ app.use((err, req, res, next) => {
 /* eslint-enable no-unused-vars*/
   res.status(err.status)
   .set({
-    Allow: 'GET, POST',
+    Allow: 'GET, PUT, DELETE',
   })
   .send(err.message);
 });
@@ -198,10 +198,10 @@ app.use((err, req, res, next) => {
 });
 
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'POST') {
+  if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET or POST instead.`);
+    const err = new Error(`You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
     err.status = 405;
     next(err);
   }
@@ -238,7 +238,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
             res.status(200)
             .set({
               'Content-Type': 'application/hal+json',
-              Allow: 'GET, POST',
+              Allow: 'GET, PUT, DELETE',
             })
             .json({
               _links: {
@@ -264,7 +264,7 @@ app.use((err, req, res, next) => {
 /* eslint-enable no-unused-vars*/
   res.status(err.status)
   .set({
-    Allow: 'GET, POST',
+    Allow: 'GET, PUT, DELETE',
   })
   .send(err.message);
 });
@@ -312,10 +312,10 @@ app.use((err, req, res, next) => {
 });
 
 app.all('/api/v1/logs/:name', (req, res, next) => {
-  if (req.method === 'GET' || req.method === 'POST') {
+  if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET or POST instead.`);
+    const err = new Error(`You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
     err.status = 405;
     next(err);
   }
@@ -398,7 +398,7 @@ app.use((err, req, res, next) => {
 /* eslint-enable no-unused-vars*/
   res.status(err.status)
   .set({
-    Allow: 'GET, POST',
+    Allow: 'GET, PUT, DELETE'
   })
   .send(err.message);
 });
