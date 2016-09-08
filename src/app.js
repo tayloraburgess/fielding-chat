@@ -12,6 +12,7 @@ app.all('/api/v1', (req, res, next) => {
     next();
   } else {
     const throwErr = new Error(`You cannot ${req.method} /api/v1. Try GET instead.`);
+    throwErr.custom = true;
     throwErr.status = 405;
     throwErr.methods = 'GET';
     next(throwErr);
@@ -36,6 +37,7 @@ app.get('/api/v1', (req, res, next) => {
     });
   } else {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.custom = true;
     throwErr.status = 406;
     throwErr.methods = 'GET';
     next(throwErr);
@@ -47,6 +49,7 @@ app.all('/api/v1/users', (req, res, next) => {
     next();
   } else {
     const throwErr = new Error(`You cannot ${req.method} /api/v1/users. Try GET or POST instead.`);
+    throwErr.custom = true;
     throwErr.status = 405;
     throwErr.methods = 'GET, POST';
     next(throwErr);
@@ -72,6 +75,7 @@ app.get('/api/v1/users', (req, res, next) => {
     });
   } else {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.custom = true;
     throwErr.status = 406;
     throwErr.methods = 'GET, POST';
     next(throwErr);
@@ -83,6 +87,7 @@ app.all('/api/v1/users/:name', (req, res, next) => {
     next();
   } else {
     const throwErr = new Error(`You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
+    throwErr.custom = true;
     throwErr.status = 405;
     throwErr.methods = 'GET, PUT DELETE';
     next(throwErr);
@@ -99,6 +104,7 @@ app.get('/api/v1/users/:name', (req, res, next) => {
       });
       if (filtUsers.length === 0) {
         const throwErr = new Error(`${req.params.name} isn't an existing user name.`);
+        throwErr.custom = true;
         throwErr.status = 404;
         throwErr.methods = 'GET, PUT DELETE';
         next(throwErr);
@@ -132,6 +138,7 @@ app.get('/api/v1/users/:name', (req, res, next) => {
     });
   } else {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.custom = true;
     throwErr.status = 406;
     throwErr.methods = 'GET, PUT DELETE';
     next(throwErr);
@@ -143,6 +150,7 @@ app.all('/api/v1/messages', (req, res, next) => {
     next();
   } else {
     const throwErr = new Error(`You cannot ${req.method} /api/v1/messages. Try GET or POST instead.`);
+    throwErr.custom = true;
     throwErr.status = 405;
     throwErr.methods = 'GET, POST';
     next(throwErr);
@@ -168,6 +176,7 @@ app.get('/api/v1/messages', (req, res, next) => {
     });
   } else {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.custom = true;
     throwErr.status = 406;
     throwErr.methods = 'GET, POST'
     next(throwErr);
@@ -179,6 +188,7 @@ app.all('/api/v1/messages/:ref_id', (req, res, next) => {
     next();
   } else {
     const throwErr = new Error(`You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
+    throwErr.custom = true;
     throwErr.status = 405;
     throwErr.methods = 'GET, PUT, DELETE'
     next(throwErr);
@@ -195,6 +205,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
       });
       if (filtMessages.length === 0) {
         const throwErr = new Error(`${req.params.ref_id} isn't an existing message.`);
+        throwErr.custom = true;
         throwErr.status = 404;
         throwErr.methods = 'GET, PUT DELETE';
         next(throwErr);
@@ -235,6 +246,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
     });
   } else {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.custom = true;
     throwErr.status = 406;
     throwErr.methods = 'GET, PUT DELETE';
     next(throwErr);
@@ -246,6 +258,7 @@ app.all('/api/v1/logs', (req, res, next) => {
     next();
   } else {
     const throwErr = new Error(`You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
+    throwErr.custom = true;
     throwErr.status = 405;
     throwErr.methods = 'GET, POST'
     next(throwErr);
@@ -271,6 +284,7 @@ app.get('/api/v1/logs', (req, res, next) => {
     });
   } else {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.custom = true;
     throwErr.status = 406;
     throwErr.methods = 'GET, POST'
     next(throwErr);
@@ -282,6 +296,7 @@ app.all('/api/v1/logs/:name', (req, res, next) => {
     next();
   } else {
     const throwErr = new Error(`You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
+    throwErr.custom = true;
     throwErr.status = 405;
     throwErr.methods = 'GET, PUT DELETE';
     next(throwErr);
@@ -298,6 +313,7 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
       });
       if (filtLogs.length === 0) {
         const throwErr = new Error(`${req.params.name} isn't an existing log.`);
+        throwErr.custom = true;
         throwErr.status = 404;
         throwErr.methods = 'GET, PUT DELETE';
         next(throwErr);
@@ -358,6 +374,7 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
     });
   } else {
     const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.custom = true;
     throwErr.status = 406;
     throwErr.methods = 'GET, PUT DELETE';
     next(throwErr);
@@ -367,11 +384,16 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
 /* eslint-enable no-unused-vars*/
-  res.status(err.status)
-  .set({
-    Allow: err.methods,
-  })
-  .send(err.message);
+  if (res.headersSent || !(err.hasOwnProperty('custom'))) {
+    next(err);
+  }
+  else {
+    res.status(err.status)
+    .set({
+      Allow: err.methods,
+    })
+    .send(err.message);
+  }
 });
 
 app.listen(5000);
