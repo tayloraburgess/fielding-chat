@@ -2,12 +2,18 @@
 
 import 'babel-polyfill';
 import chai from 'chai';
-import app from '../src/app.js';
+import app from '../src/api.js';
+import * as db from '../src/db.js';
 
 const chaiHTTP = require('chai-http');
 
 chai.use(chaiHTTP);
 const should = chai.should();
+
+const userNames = ['user1', 'user2'];
+const msgRefIds = ['1', '2'];
+const msgTexts = ['text1', 'text2'];
+const logNames = ['log1', 'log2'];
 
 function randomString(stringLength = 75) {
   const possible = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n\t !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
@@ -112,53 +118,97 @@ function endpointMethods(endpoint, methods) {
     });
   });
 }
-
-describe('/api/v1', () => {
-  endpointMethods('/api/v1/', ['GET']);
-  describe('GET', () => {
-    endpointMedia('/api/v1');
-    endpointIdempotent('/api/v1');
+describe('API', () => {
+  before('start database', (done) => {
+    db.connect('mongodb://localhost/fielding_chat_test', () => {
+      done();
+    });
   });
-});
 
-describe('/api/v1/users', () => {
-  endpointMethods('/api/v1/users/', ['GET', 'POST']);
-  describe('GET', () => {
-    endpointMedia('/api/v1/users');
-    endpointIdempotent('/api/v1/users');
+  after('close database', (done) => {
+    db.disconnect(() => {
+      done();
+    });
   });
-});
 
-describe('/api/v1/users/:name', () => {
-  describe('GET', () => {
-    badResource('/api/v1/users/');
+  beforeEach('drop database', (done) => {
+    db.createUser(userNames[0], (err1, userRes1) => {
+      db.createUser(userNames[1], (err2, userRes2) => {
+        db.createMessage(userRes1._id, msgTexts[0], (err3, msgRes1) => {
+          db.createMessage(userRes2._id, msgTexts[1], (err4, msgRes2) => {
+            db.createLog([userRes1._id], [msgRes1._id], logNames[0], () => {
+              db.createLog([userRes2._id], [msgRes2._id], logNames[1], () => {
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
   });
-});
 
-describe('/api/v1/messages', () => {
-  endpointMethods('/api/v1/messages/', ['GET', 'POST']);
-  describe('GET', () => {
-    endpointMedia('/api/v1/messages');
-    endpointIdempotent('/api/v1/messages');
+  afterEach('drop database', (done) => {
+    db.drop(() => {
+      done();
+    });
   });
-});
 
-describe('/api/v1/messages/:ref_id', () => {
-  describe('GET', () => {
-    badResource('/api/v1/messages/');
+  describe('/api/v1', () => {
+    endpointMethods('/api/v1/', ['GET']);
+    describe('GET', () => {
+      endpointMedia('/api/v1');
+      endpointIdempotent('/api/v1');
+    });
   });
-});
 
-describe('/api/v1/logs', () => {
-  endpointMethods('/api/v1/logs/', ['GET', 'POST']);
-  describe('GET', () => {
-    endpointMedia('/api/v1/logs');
-    endpointIdempotent('/api/v1/logs');
+  describe('/api/v1/users', () => {
+    endpointMethods('/api/v1/users/', ['GET', 'POST']);
+    describe('GET', () => {
+      endpointMedia('/api/v1/users');
+      endpointIdempotent('/api/v1/users');
+    });
   });
-});
 
-describe('/api/v1/logs/:name', () => {
-  describe('GET', () => {
-    badResource('/api/v1/logs/');
+  describe('/api/v1/users/:name', () => {
+    endpointMethods(`/api/v1/users/${userNames[0]}`, ['GET', 'PUT', 'DELETE']);
+    describe('GET', () => {
+      badResource('/api/v1/users/');
+      endpointMedia(`/api/v1/users/${userNames[0]}`);
+      endpointIdempotent(`/api/v1/users/${userNames[0]}`);
+    });
+  });
+
+  describe('/api/v1/messages', () => {
+    endpointMethods('/api/v1/messages/', ['GET', 'POST']);
+    describe('GET', () => {
+      endpointMedia('/api/v1/messages');
+      endpointIdempotent('/api/v1/messages');
+    });
+  });
+
+  describe('/api/v1/messages/:ref_id', () => {
+    endpointMethods(`/api/v1/messages/${msgRefIds[0]}`, ['GET', 'PUT', 'DELETE']);
+    describe('GET', () => {
+      badResource('/api/v1/messages/');
+      endpointMedia(`/api/v1/messages/${msgRefIds[0]}`);
+      endpointIdempotent(`/api/v1/messages/${msgRefIds[0]}`);
+    });
+  });
+
+  describe('/api/v1/logs', () => {
+    endpointMethods('/api/v1/logs/', ['GET', 'POST']);
+    describe('GET', () => {
+      endpointMedia('/api/v1/logs');
+      endpointIdempotent('/api/v1/logs');
+    });
+  });
+
+  describe('/api/v1/logs/:name', () => {
+    endpointMethods(`/api/v1/logs/${logNames[0]}`, ['GET', 'PUT', 'DELETE']);
+    describe('GET', () => {
+      badResource('/api/v1/logs/');
+      endpointMedia(`/api/v1/logs/${logNames[0]}`);
+      endpointIdempotent(`/api/v1/logs/${logNames[0]}`);
+    });
   });
 });

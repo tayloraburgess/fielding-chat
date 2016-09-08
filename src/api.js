@@ -20,7 +20,6 @@ function customError(status, methods, next, body) {
 }
 
 const app = express();
-db.connect('mongodb://localhost/fieldingchat');
 
 app.all('/api/v1', (req, res, next) => {
   res.locals.methods = ['GET'];
@@ -31,6 +30,7 @@ app.all('/api/v1', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1. Try ${res.locals.methodsString} instead.`);
   }
 });
+
 app.get('/api/v1', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     res.status(200)
@@ -62,6 +62,7 @@ app.all('/api/v1/users', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/users. Try ${res.locals.methodsString} instead.`);
   }
 });
+
 app.get('/api/v1/users', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getUsers((err, users) => {
@@ -98,6 +99,7 @@ app.all('/api/v1/users/:name', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/users/${req.params.name}. Try ${res.locals.methodsString} instead.`);
   }
 });
+
 app.get('/api/v1/users/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getUserByName(req.params.name, (err, user) => {
@@ -148,6 +150,7 @@ app.all('/api/v1/messages', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/messages. Try ${res.locals.methodsString} instead.`);
   }
 });
+
 app.get('/api/v1/messages', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getMessages((err, messages) => {
@@ -184,6 +187,7 @@ app.all('/api/v1/messages/:ref_id', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try ${res.locals.methodsString} instead.`);
   }
 });
+
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getMessageByRefId(req.params.ref_id, (err, message) => {
@@ -245,6 +249,7 @@ app.all('/api/v1/logs', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/logs. Try ${res.locals.methodsString} instead.`);
   }
 });
+
 app.get('/api/v1/logs', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getLogs((err, logs) => {
@@ -281,6 +286,7 @@ app.all('/api/v1/logs/:name', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try ${res.locals.methodsString} instead.`);
   }
 });
+
 app.get('/api/v1/logs/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getLogByName(req.params.name, (err, log) => {
@@ -366,7 +372,5 @@ app.use((err, req, res, next) => {
     .send(err.message);
   }
 });
-
-app.listen(5000);
 
 export default app;

@@ -17,11 +17,11 @@
     "mocha": "^3.0.2"
   },
   "scripts": {
-    "start": "babel-node src/app.js",
+    "start": "babel-node src/server.js",
     "test": "mocha --compilers js:babel-register",
     "lint": "eslint .",
     "build": "babel src -d lib",
-    "serve": "node lib/app.js"
+    "serve": "node lib/server.js"
   },
   "repository": {
     "type": "git",
