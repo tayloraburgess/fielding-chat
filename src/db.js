@@ -37,7 +37,7 @@ export function drop(callback = null) {
       if (err) {
         callback(err);
       } else {
-        callback(true);
+        callback(null);
       }
     }
   });

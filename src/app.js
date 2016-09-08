@@ -90,6 +90,71 @@ app.use((err, req, res, next) => {
   .send(err.message);
 });
 
+app.all('/api/v1/users/:name', (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'POST') {
+    next();
+  } else {
+    const err = new Error(`You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET or POST instead.`);
+    err.status = 405;
+    next(err);
+  }
+});
+app.get('/api/v1/users/:name', (req, res, next) => {
+  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
+    db.getUsers((err, users) => {
+      const filtUsers = users.filter((user) => {
+        if (user.name === req.params.name) {
+          return user;
+        }
+        return false;
+      });
+      if (filtUsers.length === 0) {
+        const err = new Error(`${req.params.name} isn't an existing user name.`);
+        err.status = 404;
+        next(err);
+      } else {
+        const user = filtUsers[0];
+        db.getMessages((err, messages) => {
+          const messageItems = messages.filter((message) => {
+            if (message.user_id.toString() === user._id.toString()) {
+              return message;
+            }
+            return false;
+          }).map((message) => {
+            return { href: `/api/v1/messages/${message.ref_id}`}
+          });
+          res.status(200)
+          .set({
+            'Content-Type': 'application/hal+json',
+            Allow: 'GET, POST',
+          })
+          .json({
+            _links: {
+              self: { href: `/api/v1/users/${req.params.name}` },
+              collection: { href: '/api/v1/users' },
+              related: messageItems,
+            },
+            name: user.name,
+            createdAt: user.created_at,
+          });
+        });
+      }
+    });
+  } else {
+    res.status(406)
+    .end();
+  }
+});
+/* eslint-disable no-unused-vars */
+app.use((err, req, res, next) => {
+/* eslint-enable no-unused-vars*/
+  res.status(err.status)
+  .set({
+    Allow: 'GET, POST',
+  })
+  .send(err.message);
+});
+
 app.all('/api/v1/messages', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
@@ -116,6 +181,78 @@ app.get('/api/v1/messages', (req, res) => {
           item: items,
         },
       });
+    });
+  } else {
+    res.status(406)
+    .end();
+  }
+});
+/* eslint-disable no-unused-vars */
+app.use((err, req, res, next) => {
+/* eslint-enable no-unused-vars*/
+  res.status(err.status)
+  .set({
+    Allow: 'GET, POST',
+  })
+  .send(err.message);
+});
+
+app.all('/api/v1/messages/:ref_id', (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'POST') {
+    next();
+  } else {
+    const err = new Error(`You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET or POST instead.`);
+    err.status = 405;
+    next(err);
+  }
+});
+app.get('/api/v1/messages/:ref_id', (req, res, next) => {
+  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
+    db.getMessages((err, messages) => {
+      const filtMessages = messages.filter((message) => {
+        if (message.ref_id.toString() === req.params.ref_id.toString()) {
+          return message;
+        }
+        return false;
+      });
+      if (filtMessages.length === 0) {
+        const err = new Error(`${req.params.ref_id} isn't an existing message.`);
+        err.status = 404;
+        next(err);
+      } else {
+        const message = filtMessages[0];
+        db.getUserById(message.user_id, (err, userRes) => {
+          db.getLogs((err, logsRes) => {
+            let logItems = logsRes.filter((log) => {
+              const strMsgIds = log.message_ids.map((id) => {
+                return id.toString();
+              });
+              if (strMsgIds.indexOf(message._id.toString()) > -1) {
+                return log;
+              }
+              return false;
+            }).map((log) => {
+              return { href: `/api/v1/logs/${log.name}` };
+            });
+            logItems.unshift( { href: 'api/v1/messages' } );
+            res.status(200)
+            .set({
+              'Content-Type': 'application/hal+json',
+              Allow: 'GET, POST',
+            })
+            .json({
+              _links: {
+                self: { href: `/api/v1/messages/${req.params.ref_id}` },
+                collection: logItems,
+                related: { href: `/api/v1/users/${userRes.name}` },
+              },
+              user: userRes.name,
+              text: message.text,
+              createdAt: message.created_at,
+            });
+          });
+        });
+      }
     });
   } else {
     res.status(406)
