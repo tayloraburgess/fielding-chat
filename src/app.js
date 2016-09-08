@@ -11,13 +11,13 @@ app.all('/api/v1', (req, res, next) => {
   if (req.method === 'GET') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1. Try GET instead.`);
-    err.status = 405;
-    err.methods = 'GET'
-    next(err);
+    const throwErr = new Error(`You cannot ${req.method} /api/v1. Try GET instead.`);
+    throwErr.status = 405;
+    throwErr.methods = 'GET';
+    next(throwErr);
   }
 });
-app.get('/api/v1', (req, res) => {
+app.get('/api/v1', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     res.status(200)
     .set({
@@ -35,30 +35,24 @@ app.get('/api/v1', (req, res) => {
       },
     });
   } else {
-    res.status(406)
-    .end();
+    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.status = 406;
+    throwErr.methods = 'GET';
+    next(throwErr);
   }
-});
-/* eslint-disable no-unused-vars */
-app.use((err, req, res, next) => {
-/* eslint-enable no-unused-vars*/
-  res.status(err.status)
-  .set({
-    Allow: err.methods,
-  })
-  .send(err.message);
 });
 
 app.all('/api/v1/users', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/users. Try GET or POST instead.`);
-    err.status = 405;
-    next(err);
+    const throwErr = new Error(`You cannot ${req.method} /api/v1/users. Try GET or POST instead.`);
+    throwErr.status = 405;
+    throwErr.methods = 'GET, POST';
+    next(throwErr);
   }
 });
-app.get('/api/v1/users', (req, res) => {
+app.get('/api/v1/users', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getUsers((err, users) => {
       const items = users.map((user) => {
@@ -77,27 +71,21 @@ app.get('/api/v1/users', (req, res) => {
       });
     });
   } else {
-    res.status(406)
-    .end();
+    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.status = 406;
+    throwErr.methods = 'GET, POST';
+    next(throwErr);
   }
-});
-/* eslint-disable no-unused-vars */
-app.use((err, req, res, next) => {
-/* eslint-enable no-unused-vars*/
-  res.status(err.status)
-  .set({
-    Allow: 'GET, POST',
-  })
-  .send(err.message);
 });
 
 app.all('/api/v1/users/:name', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
-    err.status = 405;
-    next(err);
+    const throwErr = new Error(`You cannot ${req.method} /api/v1/users/${req.params.name}. Try GET, PUT, or DELETE instead.`);
+    throwErr.status = 405;
+    throwErr.methods = 'GET, PUT DELETE';
+    next(throwErr);
   }
 });
 app.get('/api/v1/users/:name', (req, res, next) => {
@@ -110,9 +98,10 @@ app.get('/api/v1/users/:name', (req, res, next) => {
         return false;
       });
       if (filtUsers.length === 0) {
-        const err = new Error(`${req.params.name} isn't an existing user name.`);
-        err.status = 404;
-        next(err);
+        const throwErr = new Error(`${req.params.name} isn't an existing user name.`);
+        throwErr.status = 404;
+        throwErr.methods = 'GET, PUT DELETE';
+        next(throwErr);
       } else {
         const user = filtUsers[0];
         db.getMessages((err, messages) => {
@@ -142,30 +131,24 @@ app.get('/api/v1/users/:name', (req, res, next) => {
       }
     });
   } else {
-    res.status(406)
-    .end();
+    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.status = 406;
+    throwErr.methods = 'GET, PUT DELETE';
+    next(throwErr);
   }
-});
-/* eslint-disable no-unused-vars */
-app.use((err, req, res, next) => {
-/* eslint-enable no-unused-vars*/
-  res.status(err.status)
-  .set({
-    Allow: 'GET, PUT, DELETE',
-  })
-  .send(err.message);
 });
 
 app.all('/api/v1/messages', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/messages. Try GET or POST instead.`);
-    err.status = 405;
-    next(err);
+    const throwErr = new Error(`You cannot ${req.method} /api/v1/messages. Try GET or POST instead.`);
+    throwErr.status = 405;
+    throwErr.methods = 'GET, POST';
+    next(throwErr);
   }
 });
-app.get('/api/v1/messages', (req, res) => {
+app.get('/api/v1/messages', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getMessages((err, messages) => {
       const items = messages.map((message) => {
@@ -184,27 +167,21 @@ app.get('/api/v1/messages', (req, res) => {
       });
     });
   } else {
-    res.status(406)
-    .end();
+    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.status = 406;
+    throwErr.methods = 'GET, POST'
+    next(throwErr);
   }
-});
-/* eslint-disable no-unused-vars */
-app.use((err, req, res, next) => {
-/* eslint-enable no-unused-vars*/
-  res.status(err.status)
-  .set({
-    Allow: 'GET, POST',
-  })
-  .send(err.message);
 });
 
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
-    err.status = 405;
-    next(err);
+    const throwErr = new Error(`You cannot ${req.method} /api/v1/messages/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
+    throwErr.status = 405;
+    throwErr.methods = 'GET, PUT, DELETE'
+    next(throwErr);
   }
 });
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
@@ -217,9 +194,10 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
         return false;
       });
       if (filtMessages.length === 0) {
-        const err = new Error(`${req.params.ref_id} isn't an existing message.`);
-        err.status = 404;
-        next(err);
+        const throwErr = new Error(`${req.params.ref_id} isn't an existing message.`);
+        throwErr.status = 404;
+        throwErr.methods = 'GET, PUT DELETE';
+        next(throwErr);
       } else {
         const message = filtMessages[0];
         db.getUserById(message.user_id, (err, userRes) => {
@@ -256,30 +234,24 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
       }
     });
   } else {
-    res.status(406)
-    .end();
+    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.status = 406;
+    throwErr.methods = 'GET, PUT DELETE';
+    next(throwErr);
   }
-});
-/* eslint-disable no-unused-vars */
-app.use((err, req, res, next) => {
-/* eslint-enable no-unused-vars*/
-  res.status(err.status)
-  .set({
-    Allow: 'GET, PUT, DELETE',
-  })
-  .send(err.message);
 });
 
 app.all('/api/v1/logs', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'POST') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
-    err.status = 405;
-    next(err);
+    const throwErr = new Error(`You cannot ${req.method} /api/v1/logs. Try GET or POST instead.`);
+    throwErr.status = 405;
+    throwErr.methods = 'GET, POST'
+    next(throwErr);
   }
 });
-app.get('/api/v1/logs', (req, res) => {
+app.get('/api/v1/logs', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getLogs((err, logs) => {
       const items = logs.map((log) => {
@@ -298,27 +270,21 @@ app.get('/api/v1/logs', (req, res) => {
       });
     });
   } else {
-    res.status(406)
-    .end();
+    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.status = 406;
+    throwErr.methods = 'GET, POST'
+    next(throwErr);
   }
-});
-/* eslint-disable no-unused-vars */
-app.use((err, req, res, next) => {
-/* eslint-enable no-unused-vars*/
-  res.status(err.status)
-  .set({
-    Allow: 'GET, POST',
-  })
-  .send(err.message);
 });
 
 app.all('/api/v1/logs/:name', (req, res, next) => {
   if (req.method === 'GET' || req.method === 'PUT' || req.method === 'DELETE') {
     next();
   } else {
-    const err = new Error(`You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
-    err.status = 405;
-    next(err);
+    const throwErr = new Error(`You cannot ${req.method} /api/v1/logs/${req.params.ref_id}. Try GET, PUT, or DELETE instead.`);
+    throwErr.status = 405;
+    throwErr.methods = 'GET, PUT DELETE';
+    next(throwErr);
   }
 });
 app.get('/api/v1/logs/:name', (req, res, next) => {
@@ -331,9 +297,10 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
         return false;
       });
       if (filtLogs.length === 0) {
-        const err = new Error(`${req.params.name} isn't an existing log.`);
-        err.status = 404;
-        next(err);
+        const throwErr = new Error(`${req.params.name} isn't an existing log.`);
+        throwErr.status = 404;
+        throwErr.methods = 'GET, PUT DELETE';
+        next(throwErr);
       } else {
         const log = filtLogs[0];
         db.getUsers((err, usersRes) => {
@@ -390,16 +357,19 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
       }
     });
   } else {
-    res.status(406)
-    .end();
+    const throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+    throwErr.status = 406;
+    throwErr.methods = 'GET, PUT DELETE';
+    next(throwErr);
   }
 });
+
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
 /* eslint-enable no-unused-vars*/
   res.status(err.status)
   .set({
-    Allow: 'GET, PUT, DELETE'
+    Allow: err.methods,
   })
   .send(err.message);
 });
