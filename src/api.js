@@ -350,12 +350,12 @@ app.post('/api/v1/logs', postMediaCheck, jsonParser, (req, res, next) => {
     } else if (!(Array.isArray(req.body.messages))) {
       customError(400, res.locals.methodsString, next, 'The "messages" field in your POST request body should be a JSON array.');
     } else {
-      db.getUserByName(req.body.users, (err, usersRes) => {
-        if (err) {
+      db.getUserByName(req.body.users, (err1, usersRes) => {
+        if (err1) {
           customError(400, res.locals.methodsString, next, 'Invalid user names in POST request body.');
         } else {
-          db.getMessageByRefId(req.body.messages, (err, msgsRes) => {
-            if (err) {
+          db.getMessageByRefId(req.body.messages, (err2, msgsRes) => {
+            if (err2) {
               customError(400, res.locals.methodsString, next, 'Invalid user refIds in POST request body.');
             } else {
               const dbUsers = usersRes.map((user) => {
