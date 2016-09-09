@@ -344,43 +344,37 @@ app.post('/api/v1/logs', postMediaCheck, jsonParser, (req, res, next) => {
     } else if (!('users' in req.body)) {
       customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "text" key/value pair in the body.');
     } else if (!(Array.isArray(req.body.users))) {
-      customError(400, res.locals.methodsString, next, 'The "users" field in your POST request body should be an array.');
+      customError(400, res.locals.methodsString, next, 'The "users" field in your POST request body should be a JSON array.');
     } else if (!('messages' in req.body)) {
       customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "messages" key/value pair in the body.');
     } else if (!(Array.isArray(req.body.messages))) {
-      customError(400, res.locals.methodsString, next, 'The "messages" field in your POST request body should be an array.');
+      customError(400, res.locals.methodsString, next, 'The "messages" field in your POST request body should be a JSON array.');
     } else {
-      const userIds = [];
-      const messagesIds = [];
-      req.body.users.forEach((user) => {
-        db.getUserByName(user, (err, userRes) => {
-          if (err) {
-            customError(400, res.locals.methodsString, next, `${user} is not an existing user.`);
-          } else {
-            console.log(userRes._id);
-            userIds.push(userRes._id);
-          }
-        });
-      });
-      req.body.messages.forEach((message) => {
-        db.getMessageByRefId(message, (err, msgRes) => {
-          if (err) {
-            customError(400, res.locals.methodsString, next, `${mesasge} is not an existing message refId.`);
-          } else {
-            console.log(msgRes._id);
-            messagesIds.push(msgRes._id);
-          }
-        });
-      });
-      console.log(userIds);
-      console.log(messagesIds);
-      db.createLog(dbUsers, dbMessages, req.name, (err, logRes) => {
+      db.getUserByName(req.body.users, (err, usersRes) => {
         if (err) {
-          customError(500, res.locals.methodsString, next);
+          customError(400, res.locals.methodsString, next, 'Invalid user names in POST request body.');
         } else {
-          res.status(201)
-          .location(`/api/v1/logs/${logRes.name}`)
-          .end();
+          db.getMessageByRefId(req.body.messages, (err, msgsRes) => {
+            if (err) {
+              customError(400, res.locals.methodsString, next, 'Invalid user refIds in POST request body.');
+            } else {
+              const dbUsers = usersRes.map((user) => {
+                return user._id;
+              });
+              const dbMsgs = msgsRes.map((message) => {
+                return message._id;
+              });
+              db.createLog(dbUsers, dbMsgs, req.body.name, (err, logRes) => {
+                if (err) {
+                  customError(500, res.locals.methodsString, next);
+                } else {
+                  res.status(201)
+                  .location(`/api/v1/logs/${logRes.name}`)
+                  .end();
+                }
+              });
+            }
+          });
         }
       });
     }
