@@ -2,12 +2,18 @@
 
 import 'babel-polyfill';
 import express from 'express';
+import * as bodyParser from 'body-parser';
 import * as db from '../src/db.js';
+
+const app = express();
+const jsonParser = bodyParser.json();
 
 function customError(status, methods, next, body) {
   let throwErr;
   if (status === 406) {
     throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
+  } else if (status === 415) {
+    throwErr = new Error('Invalid hypermedia type in your request. Try Content-Type: "application/hal+json" instead.');
   } else if (status === 500) {
     throwErr = new Error('The server failed to process your request--likely a database error. Our bad.');
   } else {
@@ -19,7 +25,13 @@ function customError(status, methods, next, body) {
   next(throwErr);
 }
 
-const app = express();
+function postMediaCheck(req, res, next) {
+  if (req.is('application/hal+json') || req.is('application/json') || req.is('json')) {
+    next();
+  } else {
+    customError(415, res.locals.methodsString, next);
+  }
+}
 
 app.all('/api/v1', (req, res, next) => {
   res.locals.methods = ['GET'];
@@ -87,6 +99,22 @@ app.get('/api/v1/users', (req, res, next) => {
     });
   } else {
     customError(406, res.locals.methodsString, next);
+  }
+});
+
+app.post('/api/v1/users', postMediaCheck, jsonParser, (req, res, next) => {
+  if (!('name' in req.body)) {
+    customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/users is missing a "name" key/value pair in the body.');
+  } else {
+    db.createUser(req.body.name, (err, userRes) => {
+      if (err) {
+        customError(500, res.locals.methodsString, next);
+      } else {
+        res.status(201)
+        .location(`/api/v1/users/${userRes.name}`)
+        .end();
+      }
+    });
   }
 });
 

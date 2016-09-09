@@ -10,7 +10,7 @@ const chaiHTTP = require('chai-http');
 chai.use(chaiHTTP);
 const should = chai.should();
 
-const userNames = ['user1', 'user2'];
+const userNames = ['user1', 'user2', 'user3'];
 const msgRefIds = ['1', '2'];
 const msgTexts = ['text1', 'text2'];
 const logNames = ['log1', 'log2'];
@@ -118,6 +118,21 @@ function endpointMethods(endpoint, methods) {
     });
   });
 }
+
+function genericPOST(endpoint, body) {
+  it('should respond with 201 (create a resource) if the request has a valid body', (done) => {
+    chai.request(app)
+    .post(endpoint)
+    .set('Content-Type', 'application/json')
+    .send(body)
+    .end((err, res) => {
+      should.not.exist(err);
+      res.status.should.equal(201);
+      done();
+    });
+  });
+}
+
 describe('API', () => {
   before('start database', (done) => {
     db.connect('mongodb://localhost/fielding_chat_test', () => {
@@ -166,6 +181,9 @@ describe('API', () => {
     describe('GET', () => {
       endpointMedia('/api/v1/users');
       endpointIdempotent('/api/v1/users');
+    });
+    describe('POST', () => {
+      genericPOST('/api/v1/users', { name: logNames[1] });
     });
   });
 
