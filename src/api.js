@@ -217,7 +217,7 @@ app.post('/api/v1/messages', postMediaCheck, jsonParser, (req, res, next) => {
     } else {
       db.getUserByName(req.body.user, (err1, userRes) => {
         if (err1) {
-          customError(400, res.locals.methodsString, next, '${req.body.user} is not an existing user.');
+          customError(400, res.locals.methodsString, next, `${req.body.user} is not an existing user.`);
         } else if (!('text' in req.body)) {
           customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "text" key/value pair in the body.');
         } else {
@@ -334,6 +334,58 @@ app.get('/api/v1/logs', (req, res, next) => {
     });
   } else {
     customError(406, res.locals.methodsString, next);
+  }
+});
+
+app.post('/api/v1/logs', postMediaCheck, jsonParser, (req, res, next) => {
+  if (req.body instanceof Object) {
+    if (!('name' in req.body)) {
+      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/logs is missing a "name" key/value pair in the body.');
+    } else if (!('users' in req.body)) {
+      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "text" key/value pair in the body.');
+    } else if (!(Array.isArray(req.body.users))) {
+      customError(400, res.locals.methodsString, next, 'The "users" field in your POST request body should be an array.');
+    } else if (!('messages' in req.body)) {
+      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "messages" key/value pair in the body.');
+    } else if (!(Array.isArray(req.body.messages))) {
+      customError(400, res.locals.methodsString, next, 'The "messages" field in your POST request body should be an array.');
+    } else {
+      const userIds = [];
+      const messagesIds = [];
+      req.body.users.forEach((user) => {
+        db.getUserByName(user, (err, userRes) => {
+          if (err) {
+            customError(400, res.locals.methodsString, next, `${user} is not an existing user.`);
+          } else {
+            console.log(userRes._id);
+            userIds.push(userRes._id);
+          }
+        });
+      });
+      req.body.messages.forEach((message) => {
+        db.getMessageByRefId(message, (err, msgRes) => {
+          if (err) {
+            customError(400, res.locals.methodsString, next, `${mesasge} is not an existing message refId.`);
+          } else {
+            console.log(msgRes._id);
+            messagesIds.push(msgRes._id);
+          }
+        });
+      });
+      console.log(userIds);
+      console.log(messagesIds);
+      db.createLog(dbUsers, dbMessages, req.name, (err, logRes) => {
+        if (err) {
+          customError(500, res.locals.methodsString, next);
+        } else {
+          res.status(201)
+          .location(`/api/v1/logs/${logRes.name}`)
+          .end();
+        }
+      });
+    }
+  } else {
+    customError(415, res.locals.methodsString, next);
   }
 });
 

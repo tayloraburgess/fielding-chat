@@ -11,9 +11,9 @@ chai.use(chaiHTTP);
 const should = chai.should();
 
 const userNames = ['user1', 'user2', 'user3'];
-const msgRefIds = ['1', '2'];
-const msgTexts = ['text1', 'text2'];
-const logNames = ['log1', 'log2'];
+const msgRefIds = ['1', '2', '3'];
+const msgTexts = ['text1', 'text2', 'text3'];
+const logNames = ['log1', 'log2', 'log3'];
 
 function randomString(stringLength = 75) {
   const possible = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n\t !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
@@ -183,7 +183,7 @@ describe('API', () => {
       endpointIdempotent('/api/v1/users');
     });
     describe('POST', () => {
-      genericPOST('/api/v1/users', { name: logNames[1] });
+      genericPOST('/api/v1/users', { name: userNames[2] });
     });
   });
 
@@ -214,7 +214,7 @@ describe('API', () => {
       endpointIdempotent('/api/v1/messages');
     });
     describe('POST', () => {
-      genericPOST('/api/v1/messages', { user: userNames[0], text: 'text3' });
+      genericPOST('/api/v1/messages', { user: userNames[0], text: msgTexts[2] });
     });
   });
 
@@ -232,6 +232,9 @@ describe('API', () => {
     describe('GET', () => {
       endpointMedia('/api/v1/logs');
       endpointIdempotent('/api/v1/logs');
+    });
+    describe('POST', () => {
+      genericPOST('/api/v1/logs', { users: [userNames[0], userNames[1]], messages: [msgRefIds[0], msgRefIds[1]], name: logNames[2] });
     });
   });
 

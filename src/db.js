@@ -70,12 +70,20 @@ export function getUserById(userId, callback = null) {
 }
 
 export function getUserByName(name, callback = null) {
-  User.find({ name }, (err, user) => {
+  const query = {};
+  if (Array.isArray(name)) {
+    query.name = { $in: name };
+  } else {
+    query.name = name;
+  }
+  User.find(query, (err, user) => {
     if (callback) {
       if (err) {
         callback(err, null);
-      } else if (user.length > 0) {
+      } else if (user.length === 1) {
         callback(null, user[0]);
+      } else if (user.length > 1) {
+        callback(null, user);
       } else {
         callback(new Error(), null);
       }
@@ -196,12 +204,20 @@ export function getMessageById(messageId, callback = null) {
 }
 
 export function getMessageByRefId(refId, callback = null) {
-  Message.find({ ref_id: refId }, (err, message) => {
+  const query = {};
+  if (Array.isArray(refId)) {
+    query.ref_id = { $in: refId };
+  } else {
+    query.ref_id = refId;
+  }
+  Message.find(query, (err, message) => {
     if (callback) {
       if (err) {
         callback(err, null);
-      } else if (message.length > 0) {
+      } else if (message.length === 1) {
         callback(null, message[0]);
+      } else if (message.length > 1) {
+        callback(null, message);
       } else {
         callback(new Error(), null);
       }
@@ -300,12 +316,20 @@ export function getLogById(logId, callback = null) {
 }
 
 export function getLogByName(name, callback = null) {
-  Log.find({ name }, (err, log) => {
+  const query = {};
+  if (Array.isArray(name)) {
+    query.name = { $in: name };
+  } else {
+    query.name = name;
+  }
+  Log.find(query, (err, log) => {
     if (callback) {
       if (err) {
         callback(err, null);
-      } else if (log.length > 0) {
+      } else if (log.length === 1) {
         callback(null, log[0]);
+      } else if (log.length > 1) {
+        callback(null, log);
       } else {
         callback(new Error(), null);
       }
