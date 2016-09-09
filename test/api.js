@@ -10,10 +10,10 @@ const chaiHTTP = require('chai-http');
 chai.use(chaiHTTP);
 const should = chai.should();
 
-const userNames = ['user1', 'user2'];
-const msgRefIds = ['1', '2'];
-const msgTexts = ['text1', 'text2'];
-const logNames = ['log1', 'log2'];
+const userNames = ['user1', 'user2', 'user3'];
+const msgRefIds = ['1', '2', '3'];
+const msgTexts = ['text1', 'text2', 'text3'];
+const logNames = ['log1', 'log2', 'log3'];
 
 function randomString(stringLength = 75) {
   const possible = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n\t !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
@@ -63,7 +63,7 @@ function endpointMedia(endpoint) {
   });
 }
 
-function endpointIdempotent(endpoint) {
+function idempotentGET(endpoint) {
   it('should respond with the same representation if requested multiple times', (done) => {
     let firstReqBody;
     let firstReqStatus;
@@ -118,6 +118,67 @@ function endpointMethods(endpoint, methods) {
     });
   });
 }
+
+function genericPOST(endpoint, body) {
+  it('should respond with 201 (create a resource) if the request is valid', (done) => {
+    chai.request(app)
+    .post(endpoint)
+    .set('Content-Type', 'application/json')
+    .send(body)
+    .end((err, res) => {
+      should.not.exist(err);
+      res.status.should.equal(201);
+      done();
+    });
+  });
+
+  it('should respond with 415 if the request media type is invalid', (done) => {
+    chai.request(app)
+    .post(endpoint)
+    .set('Content-Type', 'text/plain')
+    .send('text')
+    .end((err) => {
+      should.exist(err);
+      err.status.should.equal(415);
+      done();
+    });
+  });
+
+  it('should respond with 400 if the request media type is valid but contains invalid data', (done) => {
+    chai.request(app)
+    .post(endpoint)
+    .set('Content-Type', 'application/json')
+    .send({})
+    .end((err) => {
+      should.exist(err);
+      err.status.should.equal(400);
+      done();
+    });
+  });
+}
+
+function idempotentPOST(endpoint, body) {
+  it('should respond with the same representation if requested multiple times with the same data', (done) => {
+    chai.request(app)
+    .post(endpoint)
+    .set('Content-Type', 'application/json')
+    .send(body)
+    .end((err1, res1) => {
+      chai.request(app)
+      .post(endpoint)
+      .set('Content-Type', 'application/json')
+      .send(body)
+      .end((err2, res2) => {
+        should.not.exist(err2);
+        res1.status.should.equal(201);
+        res2.status.should.equal(201);
+        res1.headers.location.should.equal(res2.headers.location);
+        done();
+      });
+    });
+  });
+}
+
 describe('API', () => {
   before('start database', (done) => {
     db.connect('mongodb://localhost/fielding_chat_test', () => {
@@ -157,7 +218,7 @@ describe('API', () => {
     endpointMethods('/api/v1/', ['GET']);
     describe('GET', () => {
       endpointMedia('/api/v1');
-      endpointIdempotent('/api/v1');
+      idempotentGET('/api/v1');
     });
   });
 
@@ -165,7 +226,12 @@ describe('API', () => {
     endpointMethods('/api/v1/users/', ['GET', 'POST']);
     describe('GET', () => {
       endpointMedia('/api/v1/users');
-      endpointIdempotent('/api/v1/users');
+      idempotentGET('/api/v1/users');
+    });
+    describe('POST', () => {
+      const body = { name: userNames[2] };
+      genericPOST('/api/v1/users', body);
+      idempotentPOST('/api/v1/users', body);
     });
   });
 
@@ -174,7 +240,7 @@ describe('API', () => {
     describe('GET', () => {
       badResource('/api/v1/users/');
       endpointMedia(`/api/v1/users/${userNames[0]}`);
-      endpointIdempotent(`/api/v1/users/${userNames[0]}`);
+      idempotentGET(`/api/v1/users/${userNames[0]}`);
       it('should still send a correct represention even if the user name contains spaces', (done) => {
         db.createUser('user 1', () => {
           chai.request(app)
@@ -193,7 +259,10 @@ describe('API', () => {
     endpointMethods('/api/v1/messages/', ['GET', 'POST']);
     describe('GET', () => {
       endpointMedia('/api/v1/messages');
-      endpointIdempotent('/api/v1/messages');
+      idempotentGET('/api/v1/messages');
+    });
+    describe('POST', () => {
+      genericPOST('/api/v1/messages', { user: userNames[0], text: msgTexts[2] });
     });
   });
 
@@ -202,7 +271,7 @@ describe('API', () => {
     describe('GET', () => {
       badResource('/api/v1/messages/');
       endpointMedia(`/api/v1/messages/${msgRefIds[0]}`);
-      endpointIdempotent(`/api/v1/messages/${msgRefIds[0]}`);
+      idempotentGET(`/api/v1/messages/${msgRefIds[0]}`);
     });
   });
 
@@ -210,7 +279,12 @@ describe('API', () => {
     endpointMethods('/api/v1/logs/', ['GET', 'POST']);
     describe('GET', () => {
       endpointMedia('/api/v1/logs');
-      endpointIdempotent('/api/v1/logs');
+      idempotentGET('/api/v1/logs');
+    });
+    describe('POST', () => {
+      const body = { users: [userNames[0], userNames[1]], messages: [msgRefIds[0], msgRefIds[1]], name: logNames[2] };
+      genericPOST('/api/v1/logs', body);
+      idempotentPOST('/api/v1/logs', body);
     });
   });
 
@@ -219,7 +293,7 @@ describe('API', () => {
     describe('GET', () => {
       badResource('/api/v1/logs/');
       endpointMedia(`/api/v1/logs/${logNames[0]}`);
-      endpointIdempotent(`/api/v1/logs/${logNames[0]}`);
+      idempotentGET(`/api/v1/logs/${logNames[0]}`);
       it('should still send a correct represention even if the log name contains spaces', (done) => {
         db.createLog([], [], 'log 1', () => {
           chai.request(app)

@@ -118,6 +118,19 @@ describe('mongo', () => {
         });
       });
 
+      it('if passed an array, should get multiple users with the input names and pass them to the callback', (done) => {
+        db.createUser('user1', (err1, userRes1) => {
+          db.createUser('user2', (err2, userRes2) => {
+            db.getUserByName([userRes1.name, userRes2.name], (err3, userRes3) => {
+              should.not.exist(err3);
+              userRes3[0]._id.toString().should.equal(userRes1._id.toString());
+              userRes3[1]._id.toString().should.equal(userRes2._id.toString());
+              done();
+            });
+          });
+        });
+      });
+
       it('should pass an error to the callback if the user does not exist', (done) => {
         db.getUserByName('user1', (err, res) => {
           should.exist(err);
@@ -233,6 +246,21 @@ describe('mongo', () => {
               should.not.exist(err3);
               msgRes2._id.toString().should.equal(msgRes1._id.toString());
               done();
+            });
+          });
+        });
+      });
+
+      it('if passed an array, should get multiple messages with the input refIds and pass it to the callback', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes1) => {
+            db.createMessage(userRes._id, 'text2', (err3, msgRes2) => {
+              db.getMessageByRefId([msgRes1.ref_id, msgRes2.ref_id], (err4, msgRes3) => {
+                should.not.exist(err4);
+                msgRes3[0]._id.toString().should.equal(msgRes1._id.toString());
+                msgRes3[1]._id.toString().should.equal(msgRes2._id.toString());
+                done();
+              });
             });
           });
         });
@@ -379,6 +407,23 @@ describe('mongo', () => {
                 should.not.exist(err4);
                 logRes2._id.toString().should.equal(logRes1._id.toString());
                 done();
+              });
+            });
+          });
+        });
+      });
+
+      it('if passed an array, should get multiple logs with the input names and pass them to the callback', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
+              db.createLog([userRes._id], [msgRes._id], 'log2', (err4, logRes2) => {
+                db.getLogByName([logRes1.name, logRes2.name], (err5, logRes3) => {
+                  should.not.exist(err5);
+                  logRes3[0]._id.toString().should.equal(logRes1._id.toString());
+                  logRes3[1]._id.toString().should.equal(logRes2._id.toString());
+                  done();
+                });
               });
             });
           });
