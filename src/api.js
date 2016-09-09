@@ -103,18 +103,22 @@ app.get('/api/v1/users', (req, res, next) => {
 });
 
 app.post('/api/v1/users', postMediaCheck, jsonParser, (req, res, next) => {
-  if (!('name' in req.body)) {
-    customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/users is missing a "name" key/value pair in the body.');
+  if (req.body instanceof Object) {
+    if (!('name' in req.body)) {
+      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/users is missing a "name" key/value pair in the body.');
+    } else {
+      db.createUser(req.body.name, (err, userRes) => {
+        if (err) {
+          customError(500, res.locals.methodsString, next);
+        } else {
+          res.status(201)
+          .location(`/api/v1/users/${userRes.name}`)
+          .end();
+        }
+      });
+    }
   } else {
-    db.createUser(req.body.name, (err, userRes) => {
-      if (err) {
-        customError(500, res.locals.methodsString, next);
-      } else {
-        res.status(201)
-        .location(`/api/v1/users/${userRes.name}`)
-        .end();
-      }
-    });
+    customError(415, res.locals.methodsString, next);
   }
 });
 
