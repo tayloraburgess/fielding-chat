@@ -210,6 +210,34 @@ app.get('/api/v1/messages', (req, res, next) => {
   }
 });
 
+app.post('/api/v1/messages', postMediaCheck, jsonParser, (req, res, next) => {
+  if (req.body instanceof Object) {
+    if (!('user' in req.body)) {
+      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "user" key/value pair in the body.');
+    } else {
+      db.getUserByName(req.body.user, (err1, userRes) => {
+        if (err1) {
+          customError(400, res.locals.methodsString, next, '${req.body.user} is not an existing user.');
+        } else if (!('text' in req.body)) {
+          customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "text" key/value pair in the body.');
+        } else {
+          db.createMessage(userRes._id, req.body.text, (err2, msgRes) => {
+            if (err2) {
+              customError(500, res.locals.methodsString, next);
+            } else {
+              res.status(201)
+              .location(`/api/v1/messages/${msgRes.ref_id}`)
+              .end();
+            }
+          });
+        }
+      });
+    }
+  } else {
+    customError(415, res.locals.methodsString, next);
+  }
+});
+
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
   res.locals.methods = ['GET', 'PUT', 'DELETE'];
   res.locals.methodsString = res.locals.methods.join(', ');

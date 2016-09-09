@@ -213,6 +213,9 @@ describe('API', () => {
       endpointMedia('/api/v1/messages');
       endpointIdempotent('/api/v1/messages');
     });
+    describe('POST', () => {
+      genericPOST('/api/v1/messages', { user: userNames[0], text: 'text3' });
+    });
   });
 
   describe('/api/v1/messages/:ref_id', () => {
