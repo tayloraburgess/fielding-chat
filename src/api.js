@@ -80,11 +80,22 @@ function reqBodyObjectCheck(req, res, next) {
 }
 
 function resGetMessages(req, res, next) {
-  db.getMessages((err, messages) => {
+  db.getMessages((err, msgsRes) => {
     if (err) {
       customError(500, res.locals.methodsString, next);
     } else {
-      res.locals.messages = messages;
+      res.locals.messages = msgsRes;
+      next();
+    }
+  });
+}
+
+function resGetLogs(req, res, next) {
+  db.getLogs((err, logsRes) => {
+    if (err) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.locals.logs = logsRes;
       next();
     }
   });
@@ -346,17 +357,8 @@ app.get('/api/v1/messages/:ref_id', reqAcceptCheck, (req, res, next) => {
       next();
     }
   });
-}, (req, res, next) => {
-  db.getLogs((err3, logsRes) => {
-    if (err3) {
-      customError(500, res.locals.methodsString, next);
-    } else {
-      res.locals.logs = logsRes;
-      next();
-    }
-  });
-}, (req, res) => {
-  const logItems = res.locals.logs.filter((log) => {
+}, resGetLogs, (req, res) => {
+  const items = res.locals.logs.filter((log) => {
     const strMsgIds = log.message_ids.map((id) => {
       return id.toString();
     });
@@ -367,7 +369,7 @@ app.get('/api/v1/messages/:ref_id', reqAcceptCheck, (req, res, next) => {
   }).map((log) => {
     return { href: `/api/v1/logs/${log.name}` };
   });
-  logItems.unshift({ href: 'api/v1/messages' });
+  items.unshift({ href: 'api/v1/messages' });
   res.status(200)
   .set({
     'Content-Type': 'application/hal+json',
@@ -376,7 +378,7 @@ app.get('/api/v1/messages/:ref_id', reqAcceptCheck, (req, res, next) => {
   .json({
     _links: {
       self: { href: `/api/v1/messages/${req.params.ref_id}` },
-      collection: logItems,
+      collection: items,
       related: { href: `/api/v1/users/${res.locals.user.name}` },
     },
     user: res.locals.user.name,
@@ -436,31 +438,21 @@ app.head('/api/v1/logs', genericHEAD);
 
 app.options('/api/v1/logs', genericOPTIONS);
 
-app.get('/api/v1/logs', (req, res, next) => {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getLogs((err, logs) => {
-      if (err) {
-        customError(500, res.locals.methodsString, next);
-      } else {
-        const items = logs.map((log) => {
-          return { href: `/api/v1/logs/${log.name}` };
-        });
-        res.status(200)
-        .set({
-          'Content-Type': 'application/hal+json',
-          Allow: res.locals.methodsString,
-        })
-        .json({
-          _links: {
-            self: { href: '/api/v1/logs' },
-            item: items,
-          },
-        });
-      }
-    });
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
+app.get('/api/v1/logs', reqAcceptCheck, resGetLogs, (req, res) => {
+  const items = res.locals.logs.map((log) => {
+    return { href: `/api/v1/logs/${log.name}` };
+  });
+  res.status(200)
+  .set({
+    'Content-Type': 'application/hal+json',
+    Allow: res.locals.methodsString,
+  })
+  .json({
+    _links: {
+      self: { href: '/api/v1/logs' },
+      item: items,
+    },
+  });
 });
 
 app.post('/api/v1/logs', reqContentCheck, jsonParser, (req, res, next) => {
