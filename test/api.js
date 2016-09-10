@@ -23,7 +23,7 @@ function randomTestString(stringLength = 75) {
 }
 
 function genericHEAD(endpoint) {
-  it('should be able to respond with status code 200 to "Accept: application/hal+json"', (done) => {
+  it('should respond with status code 200 to "Accept: application/hal+json"', (done) => {
     chai.request(app)
     .head(endpoint)
     .set('Accept', 'application/hal+json')
@@ -46,13 +46,25 @@ function genericHEAD(endpoint) {
 }
 
 function genericOPTIONS(endpoint, methods) {
-  it('should be able to respond with status code 200 and possible endpoint methods', (done) => {
+  it('should respond with status code 200 and possible endpoint methods', (done) => {
     chai.request(app)
     .options(endpoint)
     .end((err, res) => {
       should.not.exist(err);
       res.should.have.status(200);
       res.headers.allow.should.equal(methods);
+      done();
+    });
+  });
+}
+
+function genericDELETE(endpoint) {
+  it('should respond with status code 204', (done) => {
+    chai.request(app)
+    .delete(endpoint)
+    .end((err, res) => {
+      should.not.exist(err);
+      res.should.have.status(204);
       done();
     });
   });
@@ -87,7 +99,7 @@ function genericGET(endpoint) {
       done();
     });
   });
-  it('should respond with 406 to other media types', (done) => {
+  it('should respond with 406 to other media types in request "Accept"', (done) => {
     chai.request(app)
     .get(endpoint)
     .set('Accept', 'foo')
@@ -305,9 +317,11 @@ describe('API', () => {
     describe('HEAD', () => {
       genericHEAD('/api/v1');
     });
+
     describe('OPTIONS', () => {
       genericOPTIONS('/api/v1', methods.join(' '));
     });
+
     describe('GET', () => {
       genericGET('/api/v1');
       idempotentGET('/api/v1');
@@ -320,13 +334,16 @@ describe('API', () => {
     describe('HEAD', () => {
       genericHEAD('/api/v1/users');
     });
+
     describe('OPTIONS', () => {
       genericOPTIONS('/api/v1/users', methods.join(' '));
     });
+
     describe('GET', () => {
       genericGET('/api/v1/users');
       idempotentGET('/api/v1/users');
     });
+
     describe('POST', () => {
       const body = { name: userNames[2] };
       genericPOST('/api/v1/users', body);
@@ -340,9 +357,15 @@ describe('API', () => {
     describe('HEAD', () => {
       genericHEAD(`/api/v1/users/${userNames[0]}`);
     });
+
     describe('OPTIONS', () => {
       genericOPTIONS(`/api/v1/users/${userNames[0]}`, methods.join(' '));
     });
+
+    describe('DELETE', () => {
+      genericDELETE(`/api/v1/users/${userNames[0]}`);
+    });
+
     describe('GET', () => {
       badResource('/api/v1/users/');
       genericGET(`/api/v1/users/${userNames[0]}`);
@@ -359,6 +382,7 @@ describe('API', () => {
         });
       });
     });
+
     describe('PUT', () => {
       describe('name', () => {
         const body = { name: userNames[1] };
@@ -373,13 +397,16 @@ describe('API', () => {
     describe('HEAD', () => {
       genericHEAD('/api/v1/messages');
     });
+
     describe('OPTIONS', () => {
       genericOPTIONS('/api/v1/messages', methods.join(' '));
     });
+
     describe('GET', () => {
       genericGET('/api/v1/messages');
       idempotentGET('/api/v1/messages');
     });
+
     describe('POST', () => {
       genericPOST('/api/v1/messages', { user: userNames[0], text: msgTexts[2] });
     });
@@ -391,14 +418,21 @@ describe('API', () => {
     describe('HEAD', () => {
       genericHEAD(`/api/v1/messages/${msgRefIds[0]}`);
     });
+
     describe('OPTIONS', () => {
       genericOPTIONS(`/api/v1/messages/${msgRefIds[0]}`, methods.join(' '));
     });
+
+    describe('DELETE', () => {
+      genericDELETE(`/api/v1/messages/${msgRefIds[0]}`);
+    });
+
     describe('GET', () => {
       badResource('/api/v1/messages/');
       genericGET(`/api/v1/messages/${msgRefIds[0]}`);
       idempotentGET(`/api/v1/messages/${msgRefIds[0]}`);
     });
+
     describe('PUT', () => {
       describe('user', () => {
         const body = { user: userNames[1] };
@@ -419,13 +453,16 @@ describe('API', () => {
     describe('HEAD', () => {
       genericHEAD('/api/v1/logs');
     });
+
     describe('OPTIONS', () => {
       genericOPTIONS('/api/v1/logs', methods.join(' '));
     });
+
     describe('GET', () => {
       genericGET('/api/v1/logs');
       idempotentGET('/api/v1/logs');
     });
+
     describe('POST', () => {
       const body = { users: [userNames[0], userNames[1]], messages: [msgRefIds[0], msgRefIds[1]], name: logNames[2] };
       genericPOST('/api/v1/logs', body);
@@ -439,9 +476,15 @@ describe('API', () => {
     describe('HEAD', () => {
       genericHEAD(`/api/v1/logs/${logNames[0]}`);
     });
+
     describe('OPTIONS', () => {
       genericOPTIONS(`/api/v1/logs/${logNames[0]}`, methods.join(' '));
     });
+
+    describe('DELETE', () => {
+      genericDELETE(`/api/v1/logs/${logNames[0]}`);
+    });
+
     describe('GET', () => {
       badResource('/api/v1/logs/');
       genericGET(`/api/v1/logs/${logNames[0]}`);
@@ -458,17 +501,20 @@ describe('API', () => {
         });
       });
     });
+
     describe('PUT', () => {
       describe('name', () => {
         const body = { name: logNames[2] };
         genericPUT(`/api/v1/logs/${logNames[0]}`, body);
         idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
       });
+
       describe('users', () => {
         const body = { users: [userNames[1]] };
         genericPUT(`/api/v1/logs/${logNames[0]}`, body);
         idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
       });
+
       describe('messages', () => {
         const body = { messages: [msgRefIds[1]] };
         genericPUT(`/api/v1/logs/${logNames[0]}`, body);

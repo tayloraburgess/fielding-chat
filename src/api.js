@@ -184,6 +184,17 @@ app.head('/api/v1/users/:name', genericHEAD);
 
 app.options('/api/v1/users/:name', genericOPTIONS);
 
+app.delete('/api/v1/users/:name', (req, res, next) => {
+  db.deleteUser(res.locals.user._id, (err) => {
+    if (err) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.status(204)
+      .end();
+    }
+  });
+});
+
 app.get('/api/v1/users/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     db.getMessages((err2, messages) => {
@@ -336,6 +347,17 @@ app.use('/api/v1/messages/:ref_id', (req, res, next) => {
 app.head('/api/v1/messages/:ref_id', genericHEAD);
 
 app.options('/api/v1/messages/:ref_id', genericOPTIONS);
+
+app.delete('/api/v1/messages/:ref_id', (req, res, next) => {
+  db.deleteMessage(res.locals.message._id, (err) => {
+    if (err) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.status(204)
+      .end();
+    }
+  });
+});
 
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
@@ -536,6 +558,17 @@ app.use('/api/v1/logs/:name', (req, res, next) => {
 app.head('/api/v1/logs/:name', genericHEAD);
 
 app.options('/api/v1/logs/:name', genericOPTIONS);
+
+app.delete('/api/v1/logs/:name', (req, res, next) => {
+  db.deleteLog(res.locals.log._id, (err) => {
+    if (err) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.status(204)
+      .end();
+    }
+  });
+});
 
 app.get('/api/v1/logs/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
