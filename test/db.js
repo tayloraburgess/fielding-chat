@@ -458,17 +458,22 @@ describe('mongo', () => {
       });
     });
 
-    describe('addUserToLog()', () => {
-      it('should update input Log document with a new user in user_ids', (done) => {
+    describe('updateLogUsers()', () => {
+      it('should update input Log document with the input users', (done) => {
         db.createUser('user1', (err1, userRes1) => {
-          db.createMessage(userRes1._id, 'text1', (err2, msgRes) => {
-            db.createLog([userRes1._id], [msgRes._id], 'log1', (err3, logRes1) => {
-              db.createUser('log2', (err4, userRes2) => {
-                db.addUserToLog(logRes1, userRes2, (err5, logRes2) => {
-                  should.not.exist(err5);
-                  logRes2.user_ids[0].toString().should.equal(userRes1._id.toString());
-                  logRes2.user_ids[1].toString().should.equal(userRes2._id.toString());
-                  done();
+          db.createUser('user2', (err2, userRes2) => {
+            db.createUser('user3', (err3, userRes3) => {
+              db.createMessage(userRes1._id, 'text1', (err4, msgRes) => {
+                db.createLog([userRes1._id, userRes2._id], [msgRes._id], 'log1', (err5, logRes1) => {
+                  db.updateLogUsers(logRes1._id, [userRes2._id, userRes3._id], (err6, res) => {
+                    should.not.exist(err6);
+                    res.nModified.should.equal(1);
+                    db.getLogById(logRes1._id, (err7, logRes2) => {
+                      logRes2.user_ids[0].toString().should.equal(userRes2._id.toString());
+                      logRes2.user_ids[1].toString().should.equal(userRes3._id.toString());
+                      done();
+                    });
+                  });
                 });
               });
             });
@@ -477,33 +482,19 @@ describe('mongo', () => {
       });
     });
 
-    describe('removeUserFromLog()', () => {
-      it('should update input Log document by removing the input User from user_ids', (done) => {
-        db.createUser('user2', (err1, userRes) => {
-          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
-            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
-              db.removeUserFromLog(logRes1, userRes._id, (err4, logRes2) => {
-                should.not.exist(err4);
-                logRes2.user_ids.length.should.equal(0);
-                done();
-              });
-            });
-          });
-        });
-      });
-    });
-
-    describe('addMessageToLog()', () => {
-      it('should update input Log document with a new user in user_ids', (done) => {
+    describe('updateLogMessages()', () => {
+      it('should update input Log document with the input messages', (done) => {
         db.createUser('user1', (err1, userRes) => {
           db.createMessage(userRes._id, 'text1', (err2, msgRes1) => {
-            db.createLog([userRes._id], [msgRes1._id], 'log1', (err3, logRes1) => {
-              db.createMessage(userRes._id, 'text2', (err4, msgRes2) => {
-                db.addMessageToLog(logRes1, msgRes2._id, (err5, logRes2) => {
+            db.createMessage(userRes._id, 'text2', (err3, msgRes2) => {
+              db.createLog([userRes._id], [msgRes1._id], 'log1', (err4, logRes1) => {
+                db.updateLogMessages(logRes1._id, [msgRes2._id], (err5, res) => {
                   should.not.exist(err5);
-                  logRes2.message_ids[0].toString().should.equal(msgRes1._id.toString());
-                  logRes2.message_ids[1].toString().should.equal(msgRes2._id.toString());
-                  done();
+                  res.nModified.should.equal(1);
+                  db.getLogById(logRes1._id, (err6, logRes2) => {
+                    logRes2.message_ids[0].toString().should.equal(msgRes2._id.toString());
+                    done();
+                  });
                 });
               });
             });
@@ -512,21 +503,6 @@ describe('mongo', () => {
       });
     });
 
-    describe('removeMessageFromLog()', () => {
-      it('should update input Log document by removing the input User from user_ids', (done) => {
-        db.createUser('user1', (err1, userRes) => {
-          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
-            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
-              db.removeMessageFromLog(logRes1, msgRes._id, (err4, logRes2) => {
-                should.not.exist(err4);
-                logRes2.message_ids.length.should.equal(0);
-                done();
-              });
-            });
-          });
-        });
-      });
-    });
     describe('deleteLog()', () => {
       it('should delete the log with the input id', (done) => {
         db.createUser('user1', (err1, userRes) => {

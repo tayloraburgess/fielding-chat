@@ -16,7 +16,7 @@ const msgTexts = ['text1', 'text2', 'text3'];
 const logNames = ['log1', 'log2', 'log3'];
 
 function randomString(stringLength = 75) {
-  const possible = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n\t !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~';
+  const possible = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n\t!"#$%&\'()*+,-.:;<=>?@[\\]^_`{|}~';
   return Array(stringLength).fill('').map(() => {
     return possible.charAt(Math.random() * (possible.length - 1));
   }).join('');
@@ -179,6 +179,54 @@ function idempotentPOST(endpoint, body) {
   });
 }
 
+function genericPUT(endpoint, body) {
+  it('should respond with 200 (update a resource) if the request is valid', (done) => {
+    chai.request(app)
+    .put(endpoint)
+    .set('Content-Type', 'application/json')
+    .send(body)
+    .end((err, res) => {
+      should.not.exist(err);
+      res.status.should.equal(200);
+      done();
+    });
+  });
+
+  it('should respond with 415 if the request media type is invalid', (done) => {
+    chai.request(app)
+    .put(endpoint)
+    .set('Content-Type', 'text/plain')
+    .send('text')
+    .end((err) => {
+      should.exist(err);
+      err.status.should.equal(415);
+      done();
+    });
+  });
+}
+
+function idempotentPUT(endpoint, body) {
+  it('should respond with the same representation if requested multiple times with the same data', (done) => {
+    chai.request(app)
+    .put(endpoint)
+    .set('Content-Type', 'application/json')
+    .send(body)
+    .end((err1, res1) => {
+      chai.request(app)
+      .put(res1.headers.location)
+      .set('Content-Type', 'application/json')
+      .send(body)
+      .end((err2, res2) => {
+        should.not.exist(err2);
+        res1.status.should.equal(200);
+        res2.status.should.equal(200);
+        res1.headers.location.should.equal(res2.headers.location);
+        done();
+      });
+    });
+  });
+}
+
 describe('API', () => {
   before('start database', (done) => {
     db.connect('mongodb://localhost/fielding_chat_test', () => {
@@ -253,6 +301,12 @@ describe('API', () => {
         });
       });
     });
+    describe('PUT', () => {
+      describe('name', () => {
+        const body = { name: userNames[1] };
+        genericPUT(`/api/v1/users/${userNames[0]}`, body);
+      });
+    });
   });
 
   describe('/api/v1/messages', () => {
@@ -272,6 +326,18 @@ describe('API', () => {
       badResource('/api/v1/messages/');
       endpointMedia(`/api/v1/messages/${msgRefIds[0]}`);
       idempotentGET(`/api/v1/messages/${msgRefIds[0]}`);
+    });
+    describe('PUT', () => {
+      describe('user', () => {
+        const body = { user: userNames[1] };
+        genericPUT(`/api/v1/messages/${msgRefIds[0]}`, body);
+        idempotentPUT(`/api/v1/messages/${msgRefIds[0]}`, body);
+      });
+      describe('text', () => {
+        const body = { text: msgTexts[1] };
+        genericPUT(`/api/v1/messages/${msgRefIds[0]}`, body);
+        idempotentPUT(`/api/v1/messages/${msgRefIds[0]}`, body);
+      });
     });
   });
 
@@ -304,6 +370,23 @@ describe('API', () => {
             done();
           });
         });
+      });
+    });
+    describe('PUT', () => {
+      describe('name', () => {
+        const body = { name: logNames[2] };
+        genericPUT(`/api/v1/logs/${logNames[0]}`, body);
+        idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
+      });
+      describe('users', () => {
+        const body = { users: [userNames[1]] };
+        genericPUT(`/api/v1/logs/${logNames[0]}`, body);
+        idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
+      });
+      describe('messages', () => {
+        const body = { messages: [msgRefIds[1]] };
+        genericPUT(`/api/v1/logs/${logNames[0]}`, body);
+        idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
       });
     });
   });
