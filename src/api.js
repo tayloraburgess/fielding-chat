@@ -79,6 +79,17 @@ function reqBodyObjectCheck(req, res, next) {
   }
 }
 
+function resGetUsers(req, res, next) {
+  db.getUsers((err, usersRes) => {
+    if (err) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.locals.users = usersRes;
+      next();
+    }
+  });
+}
+
 function resGetMessages(req, res, next) {
   db.getMessages((err, msgsRes) => {
     if (err) {
@@ -137,16 +148,7 @@ app.head('/api/v1/users', genericHEAD);
 
 app.options('/api/v1/users', genericOPTIONS);
 
-app.get('/api/v1/users', reqAcceptCheck, (req, res, next) => {
-  db.getUsers((err, users) => {
-    if (err) {
-      customError(500, res.locals.methodsString, next);
-    } else {
-      res.locals.users = users;
-      next();
-    }
-  });
-}, (req, res) => {
+app.get('/api/v1/users', reqAcceptCheck, resGetUsers, (req, res) => {
   const items = res.locals.users.map((user) => {
     return { href: `/api/v1/users/${user.name}` };
   });
@@ -532,70 +534,52 @@ app.delete('/api/v1/logs/:name', (req, res, next) => {
   });
 });
 
-app.get('/api/v1/logs/:name', (req, res, next) => {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getUsers((err2, usersRes) => {
-      if (err2) {
-        customError(500, res.locals.methodsString, next);
-      } else {
-        db.getMessages((err3, msgsRes) => {
-          if (err3) {
-            customError(500, res.locals.methodsString, next);
-          } else {
-            const strMsgIds = res.locals.log.message_ids.map((id) => {
-              return id.toString();
-            });
-            const strUserIds = res.locals.log.user_ids.map((id) => {
-              return id.toString();
-            });
-            const msgItems = msgsRes.filter((message) => {
-              if (strMsgIds.indexOf(message._id.toString()) > -1) {
-                return message;
-              }
-              return false;
-            }).map((message) => {
-              return message.ref_id.toString();
-            });
-            const userItems = usersRes.filter((user) => {
-              if (strUserIds.indexOf(user._id.toString()) > -1) {
-                return user;
-              }
-              return false;
-            }).map((user) => {
-              return user.name;
-            });
-
-            const items = userItems.map((user) => {
-              return { href: `/api/v1/users/${user}` };
-            }).concat(
-              msgItems.map((msg) => {
-                return { href: `/api/v1/messages/${msg}` };
-              })
-            );
-
-            res.status(200)
-            .set({
-              'Content-Type': 'application/hal+json',
-              Allow: res.locals.methodsString,
-            })
-            .json({
-              _links: {
-                self: { href: `/api/v1/logs/${req.params.name}` },
-                collection: { href: 'api/v1/logs' },
-                related: items,
-              },
-              name: res.locals.log.name,
-              users: userItems,
-              messages: msgItems,
-              createdAt: res.locals.log.created_at,
-            });
-          }
-        });
-      }
-    });
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
+app.get('/api/v1/logs/:name', reqAcceptCheck, resGetUsers, resGetMessages, (req, res) => {
+  const strMsgIds = res.locals.log.message_ids.map((id) => {
+    return id.toString();
+  });
+  const strUserIds = res.locals.log.user_ids.map((id) => {
+    return id.toString();
+  });
+  const msgItems = res.locals.messages.filter((message) => {
+    if (strMsgIds.indexOf(message._id.toString()) > -1) {
+      return message;
+    }
+    return false;
+  }).map((message) => {
+    return message.ref_id.toString();
+  });
+  const userItems = res.locals.users.filter((user) => {
+    if (strUserIds.indexOf(user._id.toString()) > -1) {
+      return user;
+    }
+    return false;
+  }).map((user) => {
+    return user.name;
+  });
+  const items = userItems.map((user) => {
+    return { href: `/api/v1/users/${user}` };
+  }).concat(
+    msgItems.map((msg) => {
+      return { href: `/api/v1/messages/${msg}` };
+    })
+  );
+  res.status(200)
+  .set({
+    'Content-Type': 'application/hal+json',
+    Allow: res.locals.methodsString,
+  })
+  .json({
+    _links: {
+      self: { href: `/api/v1/logs/${req.params.name}` },
+      collection: { href: 'api/v1/logs' },
+      related: items,
+    },
+    name: res.locals.log.name,
+    users: userItems,
+    messages: msgItems,
+    createdAt: res.locals.log.created_at,
+  });
 });
 
 app.use('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck);
