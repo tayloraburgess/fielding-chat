@@ -5,7 +5,7 @@ import {
   User,
   Message,
   Log,
-} from '../src/models.js';
+} from './models.js';
 
 export function connect(dbName, callback = null) {
   mongoose.connect(dbName, (err) => {
