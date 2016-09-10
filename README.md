@@ -69,7 +69,7 @@ Users are the core API resource. If you send a GET request to this endpoint, you
 Once you have a list of user URLs, or have created some users, you can GET their representation at this endpoint. You can also:
 
 - PUT updated user information to this endpoint (using the same template as POST above). You'll receive a URL for the updated resource in response.
-- DELETE the user resource
+- DELETE the user resource (note: this will also delete any messages associated with the user and remove the users from any associated logs)
 
 ### /api/v1/messages
 
@@ -92,7 +92,7 @@ At this endpoint, you can:
 
 - GET a representation of the message
 - PUT updated message information. You should use the POST template from /api/v1/messages--however, you can leave out a property if you want, say, to only update the "text" but not the "user".
-- DELETE the message resource
+- DELETE the message resource (note: this will also remove the message from any associated logs)
 
 ### /api/v1/logs
 

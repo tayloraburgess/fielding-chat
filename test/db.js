@@ -8,7 +8,7 @@ chai.use(chaiHTTP);
 const should = chai.should();
 
 describe('mongo', () => {
-  describe('helpers', () => {
+  describe('general', () => {
     describe('connect()', () => {
       it('should open a connection to the Mongo database', (done) => {
         db.connect('mongodb://localhost/fielding_chat_test', (err) => {
@@ -30,7 +30,7 @@ describe('mongo', () => {
     });
   });
 
-  describe('schema', () => {
+  describe('models', () => {
     before('start database', (done) => {
       db.connect('mongodb://localhost/fielding_chat_test', () => {
         done();
@@ -46,28 +46,6 @@ describe('mongo', () => {
     afterEach('drop database', (done) => {
       db.drop(() => {
         done();
-      });
-    });
-
-    describe('createUser()', () => {
-      it('should add a new user to the database', (done) => {
-        db.createUser('user1', (err, res) => {
-          should.not.exist(err);
-          res.should.have.property('name');
-          res.name.should.equal('user1');
-          res.should.have.property('created_at');
-          done();
-        });
-      });
-
-      it('should only add a user if the name is not taken', (done) => {
-        db.createUser('user1', (err1, res1) => {
-          db.createUser('user1', (err2, res2) => {
-            should.not.exist(err2);
-            res2._id.toString().should.equal(res1._id.toString());
-            done();
-          });
-        });
       });
     });
 
@@ -140,6 +118,28 @@ describe('mongo', () => {
       });
     });
 
+    describe('createUser()', () => {
+      it('should add a new user to the database', (done) => {
+        db.createUser('user1', (err, res) => {
+          should.not.exist(err);
+          res.should.have.property('name');
+          res.name.should.equal('user1');
+          res.should.have.property('created_at');
+          done();
+        });
+      });
+
+      it('should only add a user if the name is not taken', (done) => {
+        db.createUser('user1', (err1, res1) => {
+          db.createUser('user1', (err2, res2) => {
+            should.not.exist(err2);
+            res2._id.toString().should.equal(res1._id.toString());
+            done();
+          });
+        });
+      });
+    });
+
     describe('updateUserName()', () => {
       it('should update input User document with the input name', (done) => {
         db.createUser('user1', (err1, userRes1) => {
@@ -149,6 +149,63 @@ describe('mongo', () => {
             db.getUserById(userRes1._id, (err3, userRes2) => {
               userRes2.name.should.equal('user2');
               done();
+            });
+          });
+        });
+      });
+    });
+
+     describe('removeUserFromLog()', () => {
+      it('should update input Log document by removing the input User from user_ids', (done) => {
+        db.createUser('user2', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
+              db.removeUserFromLog(logRes1._id, userRes._id, (err4) => {
+                should.not.exist(err4);
+                db.getLogById(logRes1._id, (err5, logRes2) => {
+                  logRes2.user_ids.length.should.equal(0);
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    describe('removeUserFromAllLogs()', () => {
+      it('should update input Log documents by removing the input User from user_ids', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
+              db.createLog([userRes._id], [msgRes._id], 'log2', (err3, logRes2) => {
+                db.removeUserFromAllLogs(userRes._id, (err4) => {
+                  should.not.exist(err4);
+                  db.getLogs((err5, logsRes) => {
+                    logsRes[0].user_ids.length.should.equal(0);
+                    logsRes[1].user_ids.length.should.equal(0);
+                    done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    describe('deleteUserMessages()', () => {
+      it('should delete messages associated with the input user', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes1) => {
+            db.createMessage(userRes._id, 'tex2', (err2, msgRes2) => {
+              db.deleteUserMessages(userRes._id, (err4) => {
+                should.not.exist(err4);
+                db.getMessages((err5, msgsRes) => {
+                  msgsRes.length.should.equal(0);
+                  done();
+                });
+              });
             });
           });
         });
@@ -167,31 +224,21 @@ describe('mongo', () => {
           });
         });
       });
-    });
 
-    describe('createMessage()', () => {
-      it('should add a new Message to the database', (done) => {
+      it('should delete messages associated with the user and remove the user from any logs that contain it', (done) => {
         db.createUser('user1', (err1, userRes) => {
           db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
-            should.not.exist(err2);
-            msgRes.should.have.property('ref_id');
-            msgRes.ref_id.should.equal(1);
-            msgRes.should.have.property('user_id');
-            msgRes.user_id.should.equal(userRes._id);
-            msgRes.should.have.property('text');
-            msgRes.text.should.equal('text1');
-            done();
-          });
-        });
-      });
-
-      it('should increment the ref_id of the new Message from the previous Message', (done) => {
-        db.createUser('user1', (err1, userRes) => {
-          db.createMessage(userRes._id, 'text1', () => {
-            db.createMessage(userRes._id, 'text1', (err3, msgRes) => {
-              should.not.exist(err3);
-              msgRes.ref_id.should.equal(2);
-              done();
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
+              db.deleteUser(userRes._id, (err4) => {
+                should.not.exist(err4);
+                db.getLogById(logRes1._id, (err5, logRes2) => {
+                  logRes2.user_ids.length.should.equal(0);
+                  db.getMessages((err6, msgsRes) => {
+                    msgsRes.length.should.equal(0);
+                    done();
+                  });
+                });
+              });
             });
           });
         });
@@ -275,6 +322,35 @@ describe('mongo', () => {
       });
     });
 
+    describe('createMessage()', () => {
+      it('should add a new Message to the database', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
+            should.not.exist(err2);
+            msgRes.should.have.property('ref_id');
+            msgRes.ref_id.should.equal(1);
+            msgRes.should.have.property('user_id');
+            msgRes.user_id.should.equal(userRes._id);
+            msgRes.should.have.property('text');
+            msgRes.text.should.equal('text1');
+            done();
+          });
+        });
+      });
+
+      it('should increment the ref_id of the new Message from the previous Message', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', () => {
+            db.createMessage(userRes._id, 'text1', (err3, msgRes) => {
+              should.not.exist(err3);
+              msgRes.ref_id.should.equal(2);
+              done();
+            });
+          });
+        });
+      });
+    });
+
     describe('updateMessageText()', () => {
       it('should update input Message document with the input text', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -311,6 +387,68 @@ describe('mongo', () => {
       });
     });
 
+    describe('removeMessageFromLog()', () => {
+      it('should update input Log document by removing the input Message from message_ids', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
+              db.removeMessageFromLog(logRes1._id, msgRes._id, (err4) => {
+                should.not.exist(err4);
+                db.getLogById(logRes1._id, (err5, logRes2) => {
+                  logRes2.message_ids.length.should.equal(0);
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
+    describe('removeMessageFromAllLogs()', () => {
+      it('should update input Log documents by removing the input Message from message_ids', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
+              db.createLog([userRes._id], [msgRes._id], 'log2', (err3, logRes2) => {
+                db.removeMessageFromAllLogs(msgRes._id, (err4) => {
+                  should.not.exist(err4);
+                  db.getLogs((err5, logsRes) => {
+                    logsRes[0].message_ids.length.should.equal(0);
+                    logsRes[1].message_ids.length.should.equal(0);
+                    done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+
+      it('should update input Log documents by removing the input Messages (array) from message_ids', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes1) => {
+            db.createMessage(userRes._id, 'text2', (err2, msgRes2) => {
+              db.createMessage(userRes._id, 'text3', (err3, msgRes3) => {
+                db.createLog([userRes._id], [msgRes1._id], 'log1', (err4, logRes1) => {
+                  db.createLog([userRes._id], [msgRes2._id, msgRes3._id], 'log2', (err5, logRes2) => {
+                    db.removeMessageFromAllLogs([msgRes1._id, msgRes2._id, msgRes3._id], (err5) => {
+                      should.not.exist(err5);
+                      db.getLogs((err6, logsRes) => {
+                        logsRes[0].message_ids.length.should.equal(0);
+                        logsRes[1].message_ids.length.should.equal(0);
+                        done();
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+
     describe('deleteMessage()', () => {
       it('should delete the message with the input id', (done) => {
         db.createUser('user1', (err1, userRes) => {
@@ -325,21 +463,17 @@ describe('mongo', () => {
           });
         });
       });
-    });
-
-    describe('createLog()', () => {
-      it('should add a new log to the database', (done) => {
+      it('should remove the message from any logs that contain it', (done) => {
         db.createUser('user1', (err1, userRes) => {
           db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
-            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes) => {
-              should.not.exist(err3);
-              logRes.should.have.property('user_ids');
-              logRes.user_ids[0].should.equal(userRes._id);
-              logRes.should.have.property('message_ids');
-              logRes.message_ids[0].should.equal(msgRes._id);
-              logRes.should.have.property('name');
-              logRes.name.should.equal('log1');
-              done();
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes1) => {
+              db.deleteMessage(msgRes._id, (err4) => {
+                should.not.exist(err4);
+                db.getLogById(logRes1._id, (err5, logRes2) => {
+                  logRes2.message_ids.length.should.equal(0);
+                  done();
+                });
+              });
             });
           });
         });
@@ -435,6 +569,25 @@ describe('mongo', () => {
           should.exist(err);
           should.not.exist(res);
           done();
+        });
+      });
+    });
+
+    describe('createLog()', () => {
+      it('should add a new log to the database', (done) => {
+        db.createUser('user1', (err1, userRes) => {
+          db.createMessage(userRes._id, 'text1', (err2, msgRes) => {
+            db.createLog([userRes._id], [msgRes._id], 'log1', (err3, logRes) => {
+              should.not.exist(err3);
+              logRes.should.have.property('user_ids');
+              logRes.user_ids[0].should.equal(userRes._id);
+              logRes.should.have.property('message_ids');
+              logRes.message_ids[0].should.equal(msgRes._id);
+              logRes.should.have.property('name');
+              logRes.name.should.equal('log1');
+              done();
+            });
+          });
         });
       });
     });
