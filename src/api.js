@@ -41,8 +41,21 @@ function bodyObjectCheck(req, res, next) {
   }
 }
 
+function genericHead(req, res, next) {
+  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
+    res.status(200)
+    .set({
+      'Content-Type': 'application/hal+json',
+      Allow: res.locals.methodsString,
+    })
+    .end();
+  } else {
+    customError(406, res.locals.methodsString, next);
+  }
+}
+
 app.all('/api/v1', (req, res, next) => {
-  res.locals.methods = ['GET'];
+  res.locals.methods = ['HEAD', 'GET'];
   res.locals.methodsString = res.locals.methods.join(', ');
   if (res.locals.methods.indexOf(req.method) > -1) {
     next();
@@ -50,6 +63,8 @@ app.all('/api/v1', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1. Try ${res.locals.methodsString} instead.`);
   }
 });
+
+app.head('/api/v1', genericHead);
 
 app.get('/api/v1', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
@@ -74,7 +89,7 @@ app.get('/api/v1', (req, res, next) => {
 });
 
 app.all('/api/v1/users', (req, res, next) => {
-  res.locals.methods = ['GET', 'POST'];
+  res.locals.methods = ['HEAD', 'GET', 'POST'];
   res.locals.methodsString = res.locals.methods.join(', ');
   if (res.locals.methods.indexOf(req.method) > -1) {
     next();
@@ -82,6 +97,8 @@ app.all('/api/v1/users', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/users. Try ${res.locals.methodsString} instead.`);
   }
 });
+
+app.head('/api/v1/users', genericHead);
 
 app.get('/api/v1/users', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
@@ -131,7 +148,7 @@ app.post('/api/v1/users', reqMediaCheck, jsonParser, (req, res, next) => {
 });
 
 app.all('/api/v1/users/:name', (req, res, next) => {
-  res.locals.methods = ['GET', 'PUT', 'DELETE'];
+  res.locals.methods = ['HEAD', 'GET', 'PUT', 'DELETE'];
   res.locals.methodsString = res.locals.methods.join(', ');
   if (res.locals.methods.indexOf(req.method) > -1) {
     next();
@@ -150,6 +167,8 @@ app.use('/api/v1/users/:name', (req, res, next) => {
     }
   });
 });
+
+app.head('/api/v1/users/:name', genericHead);
 
 app.get('/api/v1/users/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
@@ -211,7 +230,7 @@ app.put('/api/v1/users/:name', (req, res) => {
 });
 
 app.all('/api/v1/messages', (req, res, next) => {
-  res.locals.methods = ['GET', 'POST'];
+  res.locals.methods = ['HEAD', 'GET', 'POST'];
   res.locals.methodsString = res.locals.methods.join(', ');
   if (res.locals.methods.indexOf(req.method) > -1) {
     next();
@@ -219,6 +238,8 @@ app.all('/api/v1/messages', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/messages. Try ${res.locals.methodsString} instead.`);
   }
 });
+
+app.head('/api/v1/messages', genericHead);
 
 app.get('/api/v1/messages', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
@@ -276,7 +297,7 @@ app.post('/api/v1/messages', reqMediaCheck, jsonParser, (req, res, next) => {
 });
 
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
-  res.locals.methods = ['GET', 'PUT', 'DELETE'];
+  res.locals.methods = ['HEAD', 'GET', 'PUT', 'DELETE'];
   res.locals.methodsString = res.locals.methods.join(', ');
   if (res.locals.methods.indexOf(req.method) > -1) {
     next();
@@ -295,6 +316,8 @@ app.use('/api/v1/messages/:ref_id', (req, res, next) => {
     }
   });
 });
+
+app.head('/api/v1/messages/:ref_id', genericHead);
 
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
@@ -385,7 +408,7 @@ app.put('/api/v1/messages/:ref_id', (req, res) => {
 });
 
 app.all('/api/v1/logs', (req, res, next) => {
-  res.locals.methods = ['GET', 'POST'];
+  res.locals.methods = ['HEAD', 'GET', 'POST'];
   res.locals.methodsString = res.locals.methods.join(', ');
   if (res.locals.methods.indexOf(req.method) > -1) {
     next();
@@ -393,6 +416,8 @@ app.all('/api/v1/logs', (req, res, next) => {
     customError(405, res.locals.methodsString, next, `You cannot ${req.method} /api/v1/logs. Try ${res.locals.methodsString} instead.`);
   }
 });
+
+app.head('/api/v1/logs', genericHead);
 
 app.get('/api/v1/logs', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
@@ -468,7 +493,7 @@ app.post('/api/v1/logs', reqMediaCheck, jsonParser, (req, res, next) => {
 });
 
 app.all('/api/v1/logs/:name', (req, res, next) => {
-  res.locals.methods = ['GET', 'PUT', 'DELETE'];
+  res.locals.methods = ['HEAD', 'GET', 'PUT', 'DELETE'];
   res.locals.methodsString = res.locals.methods.join(', ');
   if (res.locals.methods.indexOf(req.method) > -1) {
     next();
@@ -487,6 +512,8 @@ app.use('/api/v1/logs/:name', (req, res, next) => {
     }
   });
 });
+
+app.head('/api/v1/logs/:name', genericHead);
 
 app.get('/api/v1/logs/:name', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
