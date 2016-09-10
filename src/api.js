@@ -261,7 +261,7 @@ app.head('/api/v1/messages', genericHEAD);
 
 app.options('/api/v1/messages', genericOPTIONS);
 
-app.get('/api/v1/messages', reqAcceptCheck, resGetMessages, (req, res, next) => {
+app.get('/api/v1/messages', reqAcceptCheck, resGetMessages, (req, res) => {
   const items = res.locals.messages.map((message) => {
     return { href: `/api/v1/messages/${message.ref_id}` };
   });
@@ -337,50 +337,52 @@ app.delete('/api/v1/messages/:ref_id', (req, res, next) => {
   });
 });
 
-app.get('/api/v1/messages/:ref_id', (req, res, next) => {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getUserById(res.locals.message.user_id, (err2, userRes) => {
-      if (err2) {
-        customError(500, res.locals.methodsString, next);
-      } else {
-        db.getLogs((err3, logsRes) => {
-          if (err3) {
-            customError(500, res.locals.methodsString, next);
-          } else {
-            const logItems = logsRes.filter((log) => {
-              const strMsgIds = log.message_ids.map((id) => {
-                return id.toString();
-              });
-              if (strMsgIds.indexOf(res.locals.message._id.toString()) > -1) {
-                return log;
-              }
-              return false;
-            }).map((log) => {
-              return { href: `/api/v1/logs/${log.name}` };
-            });
-            logItems.unshift({ href: 'api/v1/messages' });
-            res.status(200)
-            .set({
-              'Content-Type': 'application/hal+json',
-              Allow: res.locals.methodsString,
-            })
-            .json({
-              _links: {
-                self: { href: `/api/v1/messages/${req.params.ref_id}` },
-                collection: logItems,
-                related: { href: `/api/v1/users/${userRes.name}` },
-              },
-              user: userRes.name,
-              text: res.locals.message.text,
-              createdAt: res.locals.message.created_at,
-            });
-          }
-        });
-      }
+app.get('/api/v1/messages/:ref_id', reqAcceptCheck, (req, res, next) => {
+  db.getUserById(res.locals.message.user_id, (err2, userRes) => {
+    if (err2) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.locals.user = userRes;
+      next();
+    }
+  });
+}, (req, res, next) => {
+  db.getLogs((err3, logsRes) => {
+    if (err3) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.locals.logs = logsRes;
+      next();
+    }
+  });
+}, (req, res) => {
+  const logItems = res.locals.logs.filter((log) => {
+    const strMsgIds = log.message_ids.map((id) => {
+      return id.toString();
     });
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
+    if (strMsgIds.indexOf(res.locals.message._id.toString()) > -1) {
+      return log;
+    }
+    return false;
+  }).map((log) => {
+    return { href: `/api/v1/logs/${log.name}` };
+  });
+  logItems.unshift({ href: 'api/v1/messages' });
+  res.status(200)
+  .set({
+    'Content-Type': 'application/hal+json',
+    Allow: res.locals.methodsString,
+  })
+  .json({
+    _links: {
+      self: { href: `/api/v1/messages/${req.params.ref_id}` },
+      collection: logItems,
+      related: { href: `/api/v1/users/${res.locals.user.name}` },
+    },
+    user: res.locals.user.name,
+    text: res.locals.message.text,
+    createdAt: res.locals.message.created_at,
+  });
 });
 
 app.use('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, reqBodyObjectCheck);
