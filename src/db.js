@@ -351,46 +351,30 @@ export function updateLogName(logId, newName, callback = null) {
   });
 }
 
-export function addUserToLog(logId, newUser, callback = null) {
-  getLogById(logId, (err, logRes) => {
-    if (err && callback) {
-      callback(err, null);
-    } else {
-      logRes.user_ids.push(newUser);
-      callback(null, logRes);
+export function updateLogUsers(logId, newUsers, callback = null) {
+  const query = { _id: logId };
+  const newData = { user_ids: newUsers };
+  Log.update(query, newData, {}, (err, res) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, res);
+      }
     }
   });
 }
 
-export function addMessageToLog(logId, newMessage, callback = null) {
-  getLogById(logId, (err, logRes) => {
-    if (err && callback) {
-      callback(err, null);
-    } else {
-      logRes.message_ids.push(newMessage);
-      callback(null, logRes);
-    }
-  });
-}
-
-export function removeUserFromLog(logId, userId, callback = null) {
-  getLogById(logId, (err, logRes) => {
-    if (err && callback) {
-      callback(err, null);
-    } else {
-      logRes.user_ids.pull(userId);
-      callback(null, logRes);
-    }
-  });
-}
-
-export function removeMessageFromLog(logId, messageId, callback = null) {
-  getLogById(logId, (err, logRes) => {
-    if (err && callback) {
-      callback(err, null);
-    } else {
-      logRes.message_ids.pull(messageId);
-      callback(null, logRes);
+export function updateLogMessages(logId, newMessages, callback = null) {
+  const query = { _id: logId };
+  const newData = { message_ids: newMessages };
+  Log.update(query, newData, {}, (err, res) => {
+    if (callback) {
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, res);
+      }
     }
   });
 }
