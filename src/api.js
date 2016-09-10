@@ -33,6 +33,14 @@ function reqMediaCheck(req, res, next) {
   }
 }
 
+function bodyObjectCheck(req, res, next) {
+  if (req.body instanceof Object) {
+    next();
+  } else {
+    customError(415, res.locals.methodsString, next);
+  }
+}
+
 app.all('/api/v1', (req, res, next) => {
   res.locals.methods = ['GET'];
   res.locals.methodsString = res.locals.methods.join(', ');
@@ -178,13 +186,7 @@ app.get('/api/v1/users/:name', (req, res, next) => {
   }
 });
 
-app.use('/api/v1/users/:name', reqMediaCheck, jsonParser, (req, res, next) => {
-  if (req.body instanceof Object) {
-    next();
-  } else {
-    customError(415, res.locals.methodsString, next);
-  }
-});
+app.use('/api/v1/users/:name', reqMediaCheck, jsonParser, bodyObjectCheck);
 
 app.use('/api/v1/users/:name', (req, res, next) => {
   if ('name' in req.body) {
@@ -281,48 +283,53 @@ app.all('/api/v1/messages/:ref_id', (req, res, next) => {
   }
 });
 
+app.use('/api/v1/messages/:ref_id', (req, res, next) => {
+  db.getMessageByRefId(req.params.ref_id, (err, message) => {
+    if (err) {
+      customError(404, res.locals.methodsString, next, `${req.params.ref_id} isn't an existing log.`);
+    } else {
+      res.locals.message = message;
+      next();
+    }
+  });
+});
+
 app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getMessageByRefId(req.params.ref_id, (err, message) => {
-      if (err) {
-        customError(404, res.locals.methodsString, next, `${req.params.ref_id} isn't an existing log.`);
+    db.getUserById(res.locals.message.user_id, (err2, userRes) => {
+      if (err2) {
+        customError(500, res.locals.methodsString, next);
       } else {
-        db.getUserById(message.user_id, (err2, userRes) => {
-          if (err2) {
+        db.getLogs((err3, logsRes) => {
+          if (err3) {
             customError(500, res.locals.methodsString, next);
           } else {
-            db.getLogs((err3, logsRes) => {
-              if (err3) {
-                customError(500, res.locals.methodsString, next);
-              } else {
-                const logItems = logsRes.filter((log) => {
-                  const strMsgIds = log.message_ids.map((id) => {
-                    return id.toString();
-                  });
-                  if (strMsgIds.indexOf(message._id.toString()) > -1) {
-                    return log;
-                  }
-                  return false;
-                }).map((log) => {
-                  return { href: `/api/v1/logs/${log.name}` };
-                });
-                logItems.unshift({ href: 'api/v1/messages' });
-                res.status(200)
-                .set({
-                  'Content-Type': 'application/hal+json',
-                  Allow: res.locals.methodsString,
-                })
-                .json({
-                  _links: {
-                    self: { href: `/api/v1/messages/${req.params.ref_id}` },
-                    collection: logItems,
-                    related: { href: `/api/v1/users/${userRes.name}` },
-                  },
-                  user: userRes.name,
-                  text: message.text,
-                  createdAt: message.created_at,
-                });
+            const logItems = logsRes.filter((log) => {
+              const strMsgIds = log.message_ids.map((id) => {
+                return id.toString();
+              });
+              if (strMsgIds.indexOf(res.locals.message._id.toString()) > -1) {
+                return log;
               }
+              return false;
+            }).map((log) => {
+              return { href: `/api/v1/logs/${log.name}` };
+            });
+            logItems.unshift({ href: 'api/v1/messages' });
+            res.status(200)
+            .set({
+              'Content-Type': 'application/hal+json',
+              Allow: res.locals.methodsString,
+            })
+            .json({
+              _links: {
+                self: { href: `/api/v1/messages/${req.params.ref_id}` },
+                collection: logItems,
+                related: { href: `/api/v1/users/${userRes.name}` },
+              },
+              user: userRes.name,
+              text: res.locals.message.text,
+              createdAt: res.locals.message.created_at,
             });
           }
         });
@@ -331,6 +338,48 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   } else {
     customError(406, res.locals.methodsString, next);
   }
+});
+
+app.use('/api/v1/messages/:ref_id', reqMediaCheck, jsonParser, bodyObjectCheck);
+
+app.use('/api/v1/messages/:ref_id', (req, res, next) => {
+  if ('user' in req.body) {
+    db.getUserByName(req.body.user, (err1) => {
+      if (err1) {
+        customError(404, res.locals.methodsString, next, `${req.body.user} isn't an existing user.`);
+      } else {
+        db.updateMessageUser(res.locals.message._id, req.body.user.name, (err2) => {
+          if (err2) {
+            customError(500, res.locals.methodsString, next);
+          } else {
+            next();
+          }
+        });
+      }
+    });
+  } else {
+    next();
+  }
+});
+
+app.use('/api/v1/messages/:ref_id', (req, res, next) => {
+  if ('text' in req.body) {
+    db.updateMessageText(res.locals.message._id, req.body.text, (err) => {
+      if (err) {
+        customError(500, res.locals.methodsString, next);
+      } else {
+        next();
+      }
+    });
+  } else {
+    next();
+  }
+});
+
+app.put('/api/v1/messages/:ref_id', (req, res) => {
+  res.status(200)
+  .location(`/api/v1/messages/${res.locals.message.ref_id}`)
+  .end();
 });
 
 app.all('/api/v1/logs', (req, res, next) => {

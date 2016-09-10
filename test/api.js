@@ -303,7 +303,7 @@ describe('API', () => {
     });
     describe('PUT', () => {
       describe('name', () => {
-        const body = { name: 'user1new' };
+        const body = { name: userNames[1] };
         genericPUT(`/api/v1/users/${userNames[0]}`, body);
       });
     });
@@ -326,6 +326,18 @@ describe('API', () => {
       badResource('/api/v1/messages/');
       endpointMedia(`/api/v1/messages/${msgRefIds[0]}`);
       idempotentGET(`/api/v1/messages/${msgRefIds[0]}`);
+    });
+    describe('PUT', () => {
+      describe('user', () => {
+        const body = { user: userNames[1] };
+        genericPUT(`/api/v1/messages/${msgRefIds[0]}`, body);
+        idempotentPUT(`/api/v1/messages/${msgRefIds[0]}`, body);
+      });
+      describe('text', () => {
+        const body = { text: msgTexts[1] };
+        genericPUT(`/api/v1/messages/${msgRefIds[0]}`, body);
+        idempotentPUT(`/api/v1/messages/${msgRefIds[0]}`, body);
+      });
     });
   });
 
