@@ -493,13 +493,13 @@ app.post('/api/v1/logs', reqMediaCheck, jsonParser, (req, res, next) => {
     if (!('name' in req.body)) {
       customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/logs is missing a "name" key/value pair in the body.');
     } else if (!('users' in req.body)) {
-      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "text" key/value pair in the body.');
+      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/log is missing a "users" key/value pair in the body.');
     } else if (!(Array.isArray(req.body.users))) {
-      customError(400, res.locals.methodsString, next, 'The "users" field in your POST request body should be a JSON array.');
+      customError(400, res.locals.methodsString, next, 'The "users" property in your POST request body should be a JSON array.');
     } else if (!('messages' in req.body)) {
-      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "messages" key/value pair in the body.');
+      customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/logs is missing a "messages" key/value pair in the body.');
     } else if (!(Array.isArray(req.body.messages))) {
-      customError(400, res.locals.methodsString, next, 'The "messages" field in your POST request body should be a JSON array.');
+      customError(400, res.locals.methodsString, next, 'The "messages" property in your POST request body should be a JSON array.');
     } else {
       db.getUserByName(req.body.users, (err1, usersRes) => {
         if (err1) {
@@ -663,7 +663,7 @@ app.use('/api/v1/logs/:name', (req, res, next) => {
         }
       });
     } else {
-      customError(400, res.locals.methodsString, next, 'The "users" field in your PUT request body should be a JSON array.');
+      customError(400, res.locals.methodsString, next, 'The "users" property in your PUT request body should be a JSON array.');
     }
   } else {
     next();
@@ -695,7 +695,7 @@ app.use('/api/v1/logs/:name', (req, res, next) => {
         }
       });
     } else {
-      customError(400, res.locals.methodsString, next, 'The "messages" field in your PUT request body should be a JSON array.');
+      customError(400, res.locals.methodsString, next, 'The "messages" property in your PUT request body should be a JSON array.');
     }
   } else {
     next();
