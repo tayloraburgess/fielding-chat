@@ -81,7 +81,39 @@ function reqBodyObjectCheck(req, res, next) {
 
 function reqBodyNameCheck(req, res, next) {
   if (!('name' in req.body)) {
-    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "name" key/value pair in the body.`);
+    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "name" property in the body.`);
+  } else {
+    next();
+  }
+}
+
+function reqBodyUserCheck(req, res, next) {
+  if (!('user' in req.body)) {
+    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "user" property in the body.`);
+  } else {
+    next();
+  }
+}
+
+function reqBodyTextCheck(req, res, next) {
+  if (!('text' in req.body)) {
+    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "text" property in the body.`);
+  } else {
+    next();
+  }
+}
+
+function reqBodyUsersCheck(req, res, next) {
+  if (!('users' in req.body)) {
+    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "users" property in the body.`);
+  } else {
+    next();
+  }
+}
+
+function reqBodyMessagesCheck(req, res, next) {
+  if (!('messages' in req.body)) {
+    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "messages" property in the body.`);
   } else {
     next();
   }
@@ -115,6 +147,28 @@ function resGetLogs(req, res, next) {
       customError(500, res.locals.methodsString, next);
     } else {
       res.locals.logs = logsRes;
+      next();
+    }
+  });
+}
+
+function resGetUserByName(name, req, res, next) {
+  db.getUserByName(name, (err1, userRes) => {
+    if (err1) {
+      customError(404, res.locals.methodsString, next, `${name} isn't an existing user.`);
+    } else {
+      res.locals.user = userRes;
+      next();
+    }
+  });
+}
+
+function resGetMessageByRefId(refId, req, res, next) {
+  db.getMessageByRefId(refId, (err, message) => {
+    if (err) {
+      customError(404, res.locals.methodsString, next, `${refId} isn't an existing message.`);
+    } else {
+      res.locals.message = message;
       next();
     }
   });
@@ -291,28 +345,18 @@ app.get('/api/v1/messages', reqAcceptCheck, resGetMessages, (req, res) => {
   });
 });
 
-app.post('/api/v1/messages', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
-  if (!('user' in req.body)) {
-    customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "user" key/value pair in the body.');
-  } else {
-    db.getUserByName(req.body.user, (err1, userRes) => {
-      if (err1) {
-        customError(400, res.locals.methodsString, next, `${req.body.user} is not an existing user.`);
-      } else if (!('text' in req.body)) {
-        customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "text" key/value pair in the body.');
-      } else {
-        db.createMessage(userRes._id, req.body.text, (err2, msgRes) => {
-          if (err2) {
-            customError(500, res.locals.methodsString, next);
-          } else {
-            res.status(201)
-            .location(`/api/v1/messages/${msgRes.ref_id}`)
-            .end();
-          }
-        });
-      }
-    });
-  }
+app.post('/api/v1/messages', reqContentCheck, jsonParser, reqBodyObjectCheck, reqBodyUserCheck, reqBodyTextCheck, (req, res, next) => {
+  resGetUserByName(req.body.user, req, res, next);
+}, (req, res, next) => {
+  db.createMessage(res.locals.user._id, req.body.text, (err2, msgRes) => {
+    if (err2) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.status(201)
+      .location(`/api/v1/messages/${msgRes.ref_id}`)
+      .end();
+    }
+  });
 });
 
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
@@ -453,46 +497,34 @@ app.get('/api/v1/logs', reqAcceptCheck, resGetLogs, (req, res) => {
   });
 });
 
-app.post('/api/v1/logs', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
-  if (!('name' in req.body)) {
-    customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/logs is missing a "name" key/value pair in the body.');
-  } else if (!('users' in req.body)) {
-    customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/log is missing a "users" key/value pair in the body.');
-  } else if (!(Array.isArray(req.body.users))) {
+app.post('/api/v1/logs', reqContentCheck, jsonParser, reqBodyObjectCheck, reqBodyNameCheck, reqBodyUsersCheck, reqBodyMessagesCheck, (req, res, next) => {
+  if (!(Array.isArray(req.body.users))) {
     customError(400, res.locals.methodsString, next, 'The "users" property in your POST request body should be a JSON array.');
-  } else if (!('messages' in req.body)) {
-    customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/logs is missing a "messages" key/value pair in the body.');
   } else if (!(Array.isArray(req.body.messages))) {
     customError(400, res.locals.methodsString, next, 'The "messages" property in your POST request body should be a JSON array.');
   } else {
-    db.getUserByName(req.body.users, (err1, usersRes) => {
-      if (err1) {
-        customError(400, res.locals.methodsString, next, 'Invalid user names in POST request body.');
-      } else {
-        db.getMessageByRefId(req.body.messages, (err2, msgsRes) => {
-          if (err2) {
-            customError(400, res.locals.methodsString, next, 'Invalid user refIds in POST request body.');
-          } else {
-            const dbUsers = usersRes.map((user) => {
-              return user._id;
-            });
-            const dbMsgs = msgsRes.map((message) => {
-              return message._id;
-            });
-            db.createLog(dbUsers, dbMsgs, req.body.name, (err, logRes) => {
-              if (err) {
-                customError(500, res.locals.methodsString, next);
-              } else {
-                res.status(201)
-                .location(`/api/v1/logs/${logRes.name}`)
-                .end();
-              }
-            });
-          }
-        });
-      }
-    });
+    next();
   }
+}, (req, res, next) => {
+  resGetMessageByRefId(req.body.messages, req, res, next);
+}, (req, res, next) => {
+  resGetUserByName(req.body.users, req, res, next);
+}, (req, res, next) => {
+  const dbUsers = res.locals.user.map((user) => {
+    return user._id;
+  });
+  const dbMsgs = res.locals.message.map((message) => {
+    return message._id;
+  });
+  db.createLog(dbUsers, dbMsgs, req.body.name, (err, logRes) => {
+    if (err) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.status(201)
+      .location(`/api/v1/logs/${logRes.name}`)
+      .end();
+    }
+  });
 });
 
 app.use('/api/v1/logs/:name', (req, res, next) => {
