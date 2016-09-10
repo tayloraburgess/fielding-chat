@@ -1,8 +1,8 @@
 {
   "name": "fielding-chat",
   "version": "1.0.0",
-  "description": "Small REST chat API.",
-  "main": "app.js",
+  "description": "Small RESTful chat API.",
+  "main": "lib/server.js",
   "devDependencies": {
     "babel-cli": "^6.14.0",
     "babel-core": "^6.14.0",
@@ -24,14 +24,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tayloraburgess/chat.git"
+    "url": "https://github.com/tayloraburgess/fielding-chat.git"
   },
   "author": "Taylor Burgess",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/tayloraburgess/chat/issues"
+    "url": "https://github.com/tayloraburgess/fielding-chat/issues"
   },
-  "homepage": "https://github.com/tayloraburgess/fielding-chat#readme",
+  "homepage": "https://github.com/tayloraburgess/fielding-chat/blob/master/README.md",
   "dependencies": {
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
