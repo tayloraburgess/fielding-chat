@@ -15,14 +15,62 @@ const msgRefIds = ['1', '2', '3'];
 const msgTexts = ['text1', 'text2', 'text3'];
 const logNames = ['log1', 'log2', 'log3'];
 
-function randomString(stringLength = 75) {
-  const possible = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\n\t!"#$%&\'()*+,-.:;<=>?@[\\]^_`{|}~';
+function randomTestString(stringLength = 75) {
+  const possible = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
   return Array(stringLength).fill('').map(() => {
     return possible.charAt(Math.random() * (possible.length - 1));
   }).join('');
 }
 
-function endpointMedia(endpoint) {
+function genericHEAD(endpoint) {
+  it('should respond with status code 200 to "Accept: application/hal+json"', (done) => {
+    chai.request(app)
+    .head(endpoint)
+    .set('Accept', 'application/hal+json')
+    .end((err, res) => {
+      should.not.exist(err);
+      res.should.have.status(200);
+      done();
+    });
+  });
+  it('should respond with 406 to other media types', (done) => {
+    chai.request(app)
+    .head(endpoint)
+    .set('Accept', 'foo')
+    .end((err, res) => {
+      should.exist(err);
+      res.should.have.status(406);
+      done();
+    });
+  });
+}
+
+function genericOPTIONS(endpoint, methods) {
+  it('should respond with status code 200 and possible endpoint methods', (done) => {
+    chai.request(app)
+    .options(endpoint)
+    .end((err, res) => {
+      should.not.exist(err);
+      res.should.have.status(200);
+      res.headers.allow.should.equal(methods);
+      done();
+    });
+  });
+}
+
+function genericDELETE(endpoint) {
+  it('should respond with status code 204', (done) => {
+    chai.request(app)
+    .delete(endpoint)
+    .end((err, res) => {
+      should.not.exist(err);
+      res.should.have.status(204);
+      done();
+    });
+  });
+}
+
+function genericGET(endpoint) {
   it('should be able to respond with a body of type application/hal+json', (done) => {
     chai.request(app)
     .get(endpoint)
@@ -51,7 +99,7 @@ function endpointMedia(endpoint) {
       done();
     });
   });
-  it('should respond with 406 to other media types', (done) => {
+  it('should respond with 406 to other media types in request "Accept"', (done) => {
     chai.request(app)
     .get(endpoint)
     .set('Accept', 'foo')
@@ -88,7 +136,7 @@ function idempotentGET(endpoint) {
 function badResource(endpoint) {
   it('should respond with 404 if the resource does not exist', (done) => {
     chai.request(app)
-    .get(`${endpoint}${randomString(25)}`)
+    .get(`${endpoint}${randomTestString(25)}`)
     .end((err) => {
       should.exist(err);
       err.status.should.equal(404);
@@ -99,11 +147,12 @@ function badResource(endpoint) {
 
 function endpointMethods(endpoint, methods) {
   const allMethods = {
+    HEAD: chai.request(app).head(endpoint),
     OPTIONS: chai.request(app).options(endpoint),
     GET: chai.request(app).get(endpoint),
     POST: chai.request(app).post(endpoint),
     PUT: chai.request(app).put(endpoint),
-    DELETE: chai.request(app).delete(endpoint),
+    DELETE: chai.request(app).del(endpoint),
     TRACE: chai.request(app).trace(endpoint),
   };
   Object.keys(allMethods)
@@ -263,19 +312,38 @@ describe('API', () => {
   });
 
   describe('/api/v1', () => {
-    endpointMethods('/api/v1/', ['GET']);
+    const methods = ['HEAD', 'OPTIONS', 'GET'];
+    endpointMethods('/api/v1/', methods);
+    describe('HEAD', () => {
+      genericHEAD('/api/v1');
+    });
+
+    describe('OPTIONS', () => {
+      genericOPTIONS('/api/v1', methods.join(' '));
+    });
+
     describe('GET', () => {
-      endpointMedia('/api/v1');
+      genericGET('/api/v1');
       idempotentGET('/api/v1');
     });
   });
 
   describe('/api/v1/users', () => {
-    endpointMethods('/api/v1/users/', ['GET', 'POST']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
+    endpointMethods('/api/v1/users/', methods);
+    describe('HEAD', () => {
+      genericHEAD('/api/v1/users');
+    });
+
+    describe('OPTIONS', () => {
+      genericOPTIONS('/api/v1/users', methods.join(' '));
+    });
+
     describe('GET', () => {
-      endpointMedia('/api/v1/users');
+      genericGET('/api/v1/users');
       idempotentGET('/api/v1/users');
     });
+
     describe('POST', () => {
       const body = { name: userNames[2] };
       genericPOST('/api/v1/users', body);
@@ -284,10 +352,23 @@ describe('API', () => {
   });
 
   describe('/api/v1/users/:name', () => {
-    endpointMethods(`/api/v1/users/${userNames[0]}`, ['GET', 'PUT', 'DELETE']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
+    endpointMethods(`/api/v1/users/${userNames[0]}`, methods);
+    describe('HEAD', () => {
+      genericHEAD(`/api/v1/users/${userNames[0]}`);
+    });
+
+    describe('OPTIONS', () => {
+      genericOPTIONS(`/api/v1/users/${userNames[0]}`, methods.join(' '));
+    });
+
+    describe('DELETE', () => {
+      genericDELETE(`/api/v1/users/${userNames[0]}`);
+    });
+
     describe('GET', () => {
       badResource('/api/v1/users/');
-      endpointMedia(`/api/v1/users/${userNames[0]}`);
+      genericGET(`/api/v1/users/${userNames[0]}`);
       idempotentGET(`/api/v1/users/${userNames[0]}`);
       it('should still send a correct represention even if the user name contains spaces', (done) => {
         db.createUser('user 1', () => {
@@ -301,6 +382,7 @@ describe('API', () => {
         });
       });
     });
+
     describe('PUT', () => {
       describe('name', () => {
         const body = { name: userNames[1] };
@@ -310,23 +392,47 @@ describe('API', () => {
   });
 
   describe('/api/v1/messages', () => {
-    endpointMethods('/api/v1/messages/', ['GET', 'POST']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
+    endpointMethods('/api/v1/messages/', methods);
+    describe('HEAD', () => {
+      genericHEAD('/api/v1/messages');
+    });
+
+    describe('OPTIONS', () => {
+      genericOPTIONS('/api/v1/messages', methods.join(' '));
+    });
+
     describe('GET', () => {
-      endpointMedia('/api/v1/messages');
+      genericGET('/api/v1/messages');
       idempotentGET('/api/v1/messages');
     });
+
     describe('POST', () => {
       genericPOST('/api/v1/messages', { user: userNames[0], text: msgTexts[2] });
     });
   });
 
   describe('/api/v1/messages/:ref_id', () => {
-    endpointMethods(`/api/v1/messages/${msgRefIds[0]}`, ['GET', 'PUT', 'DELETE']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
+    endpointMethods(`/api/v1/messages/${msgRefIds[0]}`, methods);
+    describe('HEAD', () => {
+      genericHEAD(`/api/v1/messages/${msgRefIds[0]}`);
+    });
+
+    describe('OPTIONS', () => {
+      genericOPTIONS(`/api/v1/messages/${msgRefIds[0]}`, methods.join(' '));
+    });
+
+    describe('DELETE', () => {
+      genericDELETE(`/api/v1/messages/${msgRefIds[0]}`);
+    });
+
     describe('GET', () => {
       badResource('/api/v1/messages/');
-      endpointMedia(`/api/v1/messages/${msgRefIds[0]}`);
+      genericGET(`/api/v1/messages/${msgRefIds[0]}`);
       idempotentGET(`/api/v1/messages/${msgRefIds[0]}`);
     });
+
     describe('PUT', () => {
       describe('user', () => {
         const body = { user: userNames[1] };
@@ -342,11 +448,21 @@ describe('API', () => {
   });
 
   describe('/api/v1/logs', () => {
-    endpointMethods('/api/v1/logs/', ['GET', 'POST']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
+    endpointMethods('/api/v1/logs/', methods);
+    describe('HEAD', () => {
+      genericHEAD('/api/v1/logs');
+    });
+
+    describe('OPTIONS', () => {
+      genericOPTIONS('/api/v1/logs', methods.join(' '));
+    });
+
     describe('GET', () => {
-      endpointMedia('/api/v1/logs');
+      genericGET('/api/v1/logs');
       idempotentGET('/api/v1/logs');
     });
+
     describe('POST', () => {
       const body = { users: [userNames[0], userNames[1]], messages: [msgRefIds[0], msgRefIds[1]], name: logNames[2] };
       genericPOST('/api/v1/logs', body);
@@ -355,10 +471,23 @@ describe('API', () => {
   });
 
   describe('/api/v1/logs/:name', () => {
-    endpointMethods(`/api/v1/logs/${logNames[0]}`, ['GET', 'PUT', 'DELETE']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
+    endpointMethods(`/api/v1/logs/${logNames[0]}`, methods);
+    describe('HEAD', () => {
+      genericHEAD(`/api/v1/logs/${logNames[0]}`);
+    });
+
+    describe('OPTIONS', () => {
+      genericOPTIONS(`/api/v1/logs/${logNames[0]}`, methods.join(' '));
+    });
+
+    describe('DELETE', () => {
+      genericDELETE(`/api/v1/logs/${logNames[0]}`);
+    });
+
     describe('GET', () => {
       badResource('/api/v1/logs/');
-      endpointMedia(`/api/v1/logs/${logNames[0]}`);
+      genericGET(`/api/v1/logs/${logNames[0]}`);
       idempotentGET(`/api/v1/logs/${logNames[0]}`);
       it('should still send a correct represention even if the log name contains spaces', (done) => {
         db.createLog([], [], 'log 1', () => {
@@ -372,17 +501,20 @@ describe('API', () => {
         });
       });
     });
+
     describe('PUT', () => {
       describe('name', () => {
         const body = { name: logNames[2] };
         genericPUT(`/api/v1/logs/${logNames[0]}`, body);
         idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
       });
+
       describe('users', () => {
         const body = { users: [userNames[1]] };
         genericPUT(`/api/v1/logs/${logNames[0]}`, body);
         idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
       });
+
       describe('messages', () => {
         const body = { messages: [msgRefIds[1]] };
         genericPUT(`/api/v1/logs/${logNames[0]}`, body);
