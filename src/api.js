@@ -113,29 +113,34 @@ app.options('/api/v1/users', genericOPTIONS);
 
 app.get('/api/v1/users', (req, res, next) => {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getUsers((err, users) => {
-      if (err) {
-        customError(500, res.locals.methodsString, next);
-      } else {
-        const items = users.map((user) => {
-          return { href: `/api/v1/users/${user.name}` };
-        });
-        res.status(200)
-        .set({
-          'Content-Type': 'application/hal+json',
-          Allow: res.locals.methodsString,
-        })
-        .json({
-          _links: {
-            self: { href: '/api/v1/users' },
-            item: items,
-          },
-        });
-      }
-    });
+    next();
   } else {
     customError(406, res.locals.methodsString, next);
   }
+}, (req, res, next) => {
+  db.getUsers((err, users) => {
+    if (err) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.locals.users = users;
+      next();
+    }
+  });
+}, (req, res) => {
+  const items = res.locals.users.map((user) => {
+    return { href: `/api/v1/users/${user.name}` };
+  });
+  res.status(200)
+  .set({
+    'Content-Type': 'application/hal+json',
+    Allow: res.locals.methodsString,
+  })
+  .json({
+    _links: {
+      self: { href: '/api/v1/users' },
+      item: items,
+    },
+  });
 });
 
 app.post('/api/v1/users', reqMediaCheck, jsonParser, (req, res, next) => {
