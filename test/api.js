@@ -45,6 +45,19 @@ function genericHEAD(endpoint) {
   });
 }
 
+function genericOPTIONS(endpoint, methods) {
+  it('should be able to respond with status code 200 and possible endpoint methods', (done) => {
+    chai.request(app)
+    .options(endpoint)
+    .end((err, res) => {
+      should.not.exist(err);
+      res.should.have.status(200);
+      res.headers.allow.should.equal(methods);
+      done();
+    });
+  });
+}
+
 function genericGET(endpoint) {
   it('should be able to respond with a body of type application/hal+json', (done) => {
     chai.request(app)
@@ -287,9 +300,13 @@ describe('API', () => {
   });
 
   describe('/api/v1', () => {
-    endpointMethods('/api/v1/', ['HEAD', 'GET']);
+    const methods = ['HEAD', 'OPTIONS', 'GET'];
+    endpointMethods('/api/v1/', methods);
     describe('HEAD', () => {
       genericHEAD('/api/v1');
+    });
+    describe('OPTIONS', () => {
+      genericOPTIONS('/api/v1', methods.join(' '));
     });
     describe('GET', () => {
       genericGET('/api/v1');
@@ -298,9 +315,13 @@ describe('API', () => {
   });
 
   describe('/api/v1/users', () => {
-    endpointMethods('/api/v1/users/', ['HEAD', 'GET', 'POST']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
+    endpointMethods('/api/v1/users/', methods);
     describe('HEAD', () => {
       genericHEAD('/api/v1/users');
+    });
+    describe('OPTIONS', () => {
+      genericOPTIONS('/api/v1/users', methods.join(' '));
     });
     describe('GET', () => {
       genericGET('/api/v1/users');
@@ -314,9 +335,13 @@ describe('API', () => {
   });
 
   describe('/api/v1/users/:name', () => {
-    endpointMethods(`/api/v1/users/${userNames[0]}`, ['HEAD', 'GET', 'PUT', 'DELETE']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
+    endpointMethods(`/api/v1/users/${userNames[0]}`, methods);
     describe('HEAD', () => {
       genericHEAD(`/api/v1/users/${userNames[0]}`);
+    });
+    describe('OPTIONS', () => {
+      genericOPTIONS(`/api/v1/users/${userNames[0]}`, methods.join(' '));
     });
     describe('GET', () => {
       badResource('/api/v1/users/');
@@ -343,9 +368,13 @@ describe('API', () => {
   });
 
   describe('/api/v1/messages', () => {
-    endpointMethods('/api/v1/messages/', ['HEAD', 'GET', 'POST']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
+    endpointMethods('/api/v1/messages/', methods);
     describe('HEAD', () => {
       genericHEAD('/api/v1/messages');
+    });
+    describe('OPTIONS', () => {
+      genericOPTIONS('/api/v1/messages', methods.join(' '));
     });
     describe('GET', () => {
       genericGET('/api/v1/messages');
@@ -357,9 +386,13 @@ describe('API', () => {
   });
 
   describe('/api/v1/messages/:ref_id', () => {
-    endpointMethods(`/api/v1/messages/${msgRefIds[0]}`, ['HEAD', 'GET', 'PUT', 'DELETE']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
+    endpointMethods(`/api/v1/messages/${msgRefIds[0]}`, methods);
     describe('HEAD', () => {
       genericHEAD(`/api/v1/messages/${msgRefIds[0]}`);
+    });
+    describe('OPTIONS', () => {
+      genericOPTIONS(`/api/v1/messages/${msgRefIds[0]}`, methods.join(' '));
     });
     describe('GET', () => {
       badResource('/api/v1/messages/');
@@ -381,9 +414,13 @@ describe('API', () => {
   });
 
   describe('/api/v1/logs', () => {
-    endpointMethods('/api/v1/logs/', ['HEAD', 'GET', 'POST']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
+    endpointMethods('/api/v1/logs/', methods);
     describe('HEAD', () => {
       genericHEAD('/api/v1/logs');
+    });
+    describe('OPTIONS', () => {
+      genericOPTIONS('/api/v1/logs', methods.join(' '));
     });
     describe('GET', () => {
       genericGET('/api/v1/logs');
@@ -397,9 +434,13 @@ describe('API', () => {
   });
 
   describe('/api/v1/logs/:name', () => {
-    endpointMethods(`/api/v1/logs/${logNames[0]}`, ['HEAD', 'GET', 'PUT', 'DELETE']);
+    const methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
+    endpointMethods(`/api/v1/logs/${logNames[0]}`, methods);
     describe('HEAD', () => {
       genericHEAD(`/api/v1/logs/${logNames[0]}`);
+    });
+    describe('OPTIONS', () => {
+      genericOPTIONS(`/api/v1/logs/${logNames[0]}`, methods.join(' '));
     });
     describe('GET', () => {
       badResource('/api/v1/logs/');
