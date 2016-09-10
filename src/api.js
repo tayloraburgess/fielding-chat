@@ -25,39 +25,6 @@ function customError(status, methods, next, body) {
   next(throwErr);
 }
 
-function reqContentCheck(req, res, next) {
-  if (req.is('application/hal+json') || req.is('application/json') || req.is('json')) {
-    next();
-  } else {
-    customError(415, res.locals.methodsString, next);
-  }
-}
-
-function reqAcceptCheck(req, res, next) {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    next();
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
-}
-
-function bodyObjectCheck(req, res, next) {
-  if (req.body instanceof Object) {
-    next();
-  } else {
-    customError(415, res.locals.methodsString, next);
-  }
-}
-
-function checkMethods(req, res, next) {
-  res.locals.methodsString = res.locals.methods.join(' ');
-  if (res.locals.methods.indexOf(req.method) > -1) {
-    next();
-  } else {
-    customError(405, res.locals.methodsString, next, `You cannot ${req.method} ${req.path}. Try ${res.locals.methodsString} instead.`);
-  }
-}
-
 function genericHEAD(req, res, next) {
   if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
     res.status(200)
@@ -79,10 +46,54 @@ function genericOPTIONS(req, res) {
   .end();
 }
 
+function reqCheckMethods(req, res, next) {
+  res.locals.methodsString = res.locals.methods.join(' ');
+  if (res.locals.methods.indexOf(req.method) > -1) {
+    next();
+  } else {
+    customError(405, res.locals.methodsString, next, `You cannot ${req.method} ${req.path}. Try ${res.locals.methodsString} instead.`);
+  }
+}
+
+function reqContentCheck(req, res, next) {
+  if (req.is('application/hal+json') || req.is('application/json') || req.is('json')) {
+    next();
+  } else {
+    customError(415, res.locals.methodsString, next);
+  }
+}
+
+function reqAcceptCheck(req, res, next) {
+  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
+    next();
+  } else {
+    customError(406, res.locals.methodsString, next);
+  }
+}
+
+function reqBodyObjectCheck(req, res, next) {
+  if (req.body instanceof Object) {
+    next();
+  } else {
+    customError(415, res.locals.methodsString, next);
+  }
+}
+
+function resGetMessages(req, res, next) {
+  db.getMessages((err, messages) => {
+    if (err) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.locals.messages = messages;
+      next();
+    }
+  });
+}
+
 app.all('/api/v1', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET'];
   next();
-}, checkMethods);
+}, reqCheckMethods);
 
 app.head('/api/v1', genericHEAD);
 
@@ -109,7 +120,7 @@ app.get('/api/v1', reqAcceptCheck, (req, res) => {
 app.all('/api/v1/users', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
   next();
-}, checkMethods);
+}, reqCheckMethods);
 
 app.head('/api/v1/users', genericHEAD);
 
@@ -164,7 +175,7 @@ app.post('/api/v1/users', reqContentCheck, jsonParser, (req, res, next) => {
 app.all('/api/v1/users/:name', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, checkMethods);
+}, reqCheckMethods);
 
 app.use('/api/v1/users/:name', (req, res, next) => {
   db.getUserByName(req.params.name, (err, user) => {
@@ -192,16 +203,7 @@ app.delete('/api/v1/users/:name', (req, res, next) => {
   });
 });
 
-app.get('/api/v1/users/:name', reqAcceptCheck, (req, res, next) => {
-  db.getMessages((err2, messages) => {
-    if (err2) {
-      customError(500, res.locals.methodsString, next);
-    } else {
-      res.locals.messages = messages;
-      next();
-    }
-  });
-}, (req, res) => {
+app.get('/api/v1/users/:name', reqAcceptCheck, resGetMessages, (req, res) => {
   const messageItems = res.locals.messages.filter((message) => {
     if (message.user_id.toString() === res.locals.user._id.toString()) {
       return message;
@@ -226,7 +228,7 @@ app.get('/api/v1/users/:name', reqAcceptCheck, (req, res, next) => {
   });
 });
 
-app.use('/api/v1/users/:name', reqContentCheck, jsonParser, bodyObjectCheck);
+app.use('/api/v1/users/:name', reqContentCheck, jsonParser, reqBodyObjectCheck);
 
 app.use('/api/v1/users/:name', (req, res, next) => {
   if ('name' in req.body) {
@@ -253,37 +255,27 @@ app.put('/api/v1/users/:name', (req, res) => {
 app.all('/api/v1/messages', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
   next();
-}, checkMethods);
+}, reqCheckMethods);
 
 app.head('/api/v1/messages', genericHEAD);
 
 app.options('/api/v1/messages', genericOPTIONS);
 
-app.get('/api/v1/messages', (req, res, next) => {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getMessages((err, messages) => {
-      if (err) {
-        customError(500, res.locals.methodsString, next);
-      } else {
-        const items = messages.map((message) => {
-          return { href: `/api/v1/messages/${message.ref_id}` };
-        });
-        res.status(200)
-        .set({
-          'Content-Type': 'application/hal+json',
-          Allow: res.locals.methodsString,
-        })
-        .json({
-          _links: {
-            self: { href: '/api/v1/messages' },
-            item: items,
-          },
-        });
-      }
-    });
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
+app.get('/api/v1/messages', reqAcceptCheck, resGetMessages, (req, res, next) => {
+  const items = res.locals.messages.map((message) => {
+    return { href: `/api/v1/messages/${message.ref_id}` };
+  });
+  res.status(200)
+  .set({
+    'Content-Type': 'application/hal+json',
+    Allow: res.locals.methodsString,
+  })
+  .json({
+    _links: {
+      self: { href: '/api/v1/messages' },
+      item: items,
+    },
+  });
 });
 
 app.post('/api/v1/messages', reqContentCheck, jsonParser, (req, res, next) => {
@@ -317,7 +309,7 @@ app.post('/api/v1/messages', reqContentCheck, jsonParser, (req, res, next) => {
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, checkMethods);
+}, reqCheckMethods);
 
 app.use('/api/v1/messages/:ref_id', (req, res, next) => {
   db.getMessageByRefId(req.params.ref_id, (err, message) => {
@@ -391,7 +383,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   }
 });
 
-app.use('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, bodyObjectCheck);
+app.use('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, reqBodyObjectCheck);
 
 app.use('/api/v1/messages/:ref_id', (req, res, next) => {
   if ('user' in req.body) {
@@ -436,7 +428,7 @@ app.put('/api/v1/messages/:ref_id', (req, res) => {
 app.all('/api/v1/logs', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
   next();
-}, checkMethods);
+}, reqCheckMethods);
 
 app.head('/api/v1/logs', genericHEAD);
 
@@ -518,7 +510,7 @@ app.post('/api/v1/logs', reqContentCheck, jsonParser, (req, res, next) => {
 app.use('/api/v1/logs/:name', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, checkMethods);
+}, reqCheckMethods);
 
 app.use('/api/v1/logs/:name', (req, res, next) => {
   db.getLogByName(req.params.name, (err, log) => {
@@ -612,7 +604,7 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
   }
 });
 
-app.use('/api/v1/logs/:name', reqContentCheck, jsonParser, bodyObjectCheck);
+app.use('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck);
 
 app.use('/api/v1/logs/:name', (req, res, next) => {
   if ('users' in req.body) {
