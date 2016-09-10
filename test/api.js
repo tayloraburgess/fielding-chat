@@ -213,7 +213,7 @@ function idempotentPUT(endpoint, body) {
     .send(body)
     .end((err1, res1) => {
       chai.request(app)
-      .put(endpoint)
+      .put(res1.headers.location)
       .set('Content-Type', 'application/json')
       .send(body)
       .end((err2, res2) => {
@@ -370,6 +370,23 @@ describe('API', () => {
             done();
           });
         });
+      });
+    });
+    describe('PUT', () => {
+      describe('name', () => {
+        const body = { name: logNames[2] };
+        genericPUT(`/api/v1/logs/${logNames[0]}`, body);
+        idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
+      });
+      describe('users', () => {
+        const body = { users: [userNames[1]] };
+        genericPUT(`/api/v1/logs/${logNames[0]}`, body);
+        idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
+      });
+      describe('messages', () => {
+        const body = { messages: [msgRefIds[1]] };
+        genericPUT(`/api/v1/logs/${logNames[0]}`, body);
+        idempotentPUT(`/api/v1/logs/${logNames[0]}`, body);
       });
     });
   });

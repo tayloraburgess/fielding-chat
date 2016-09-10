@@ -194,17 +194,19 @@ app.use('/api/v1/users/:name', (req, res, next) => {
       if (err) {
         customError(500, res.locals.methodsString, next);
       } else {
+        res.locals.newUserName = req.body.name;
         next();
       }
     });
   } else {
+    res.locals.newUserName = res.locals.user.name;
     next();
   }
 });
 
 app.put('/api/v1/users/:name', (req, res) => {
   res.status(200)
-  .location(`/api/v1/users/${res.locals.user.name}`)
+  .location(`/api/v1/users/${res.locals.newUserName}`)
   .end();
 });
 
@@ -344,11 +346,11 @@ app.use('/api/v1/messages/:ref_id', reqMediaCheck, jsonParser, bodyObjectCheck);
 
 app.use('/api/v1/messages/:ref_id', (req, res, next) => {
   if ('user' in req.body) {
-    db.getUserByName(req.body.user, (err1) => {
+    db.getUserByName(req.body.user, (err1, userRes) => {
       if (err1) {
-        customError(404, res.locals.methodsString, next, `${req.body.user} isn't an existing message.`);
+        customError(404, res.locals.methodsString, next, `${req.body.user} isn't an existing user.`);
       } else {
-        db.updateMessageUser(res.locals.message._id, req.body.user.name, (err2) => {
+        db.updateMessageUser(res.locals.message._id, userRes._id, (err2) => {
           if (err2) {
             customError(500, res.locals.methodsString, next);
           } else {
@@ -552,33 +554,93 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
   }
 });
 
-// app.use('/api/v1/logs/:name', reqMediaCheck, jsonParser, bodyObjectCheck);
+app.use('/api/v1/logs/:name', reqMediaCheck, jsonParser, bodyObjectCheck);
 
-// app.use('/api/v1/logs/:name', (req, res, next) => {
-//   if ('users' in req.body) {
-//     db.getUserByName(req.body.users, (err1) => {
-//       if (err1) {
-//         customError(404, res.locals.methodsString, next, `${req.body.user} isn't an existing message.`);
-//       } else {
-//         db.updateMessageUser(res.locals.message._id, req.body.user.name, (err2) => {
-//           if (err2) {
-//             customError(500, res.locals.methodsString, next);
-//           } else {
-//             next();
-//           }
-//         });
-//       }
-//     });
-//   } else {
-//     next();
-//   }
-// });
+app.use('/api/v1/logs/:name', (req, res, next) => {
+  if ('users' in req.body) {
+    if (Array.isArray(req.body.users)) {
+      db.getUserByName(req.body.users, (err1, userRes) => {
+        if (err1) {
+          customError(400, res.locals.methodsString, next, 'Invalid user names in PUT request body.');
+        } else {
+          let userIds;
+          if (Array.isArray(userRes)) {
+            userIds = userRes.map((user) => {
+              return user._id;
+            });
+          } else {
+            userIds = [userRes._id];
+          }
+          db.updateLogUsers(res.locals.log._id, userIds, (err2) => {
+            if (err2) {
+              customError(500, res.locals.methodsString, next);
+            } else {
+              next();
+            }
+          });
+        }
+      });
+    } else {
+      customError(400, res.locals.methodsString, next, 'The "users" field in your PUT request body should be a JSON array.');
+    }
+  } else {
+    next();
+  }
+});
 
-// app.put('/api/v1/logs/:name', (req, res) => {
-//   res.status(200)
-//   .location(`/api/v1/logs/${res.locals.log.name}`)
-//   .end();
-// });
+app.use('/api/v1/logs/:name', (req, res, next) => {
+  if ('messages' in req.body) {
+    if (Array.isArray(req.body.messages)) {
+      db.getMessageByRefId(req.body.messages, (err1, msgRes) => {
+        if (err1) {
+          customError(400, res.locals.methodsString, next, 'Invalid message refIds in PUT request body.');
+        } else {
+          let msgIds;
+          if (Array.isArray(msgRes)) {
+            msgIds = msgRes.map((message) => {
+              return message._id;
+            });
+          } else {
+            msgIds = [msgRes];
+          }
+          db.updateLogUsers(res.locals.log._id, msgIds, (err2) => {
+            if (err2) {
+              customError(500, res.locals.methodsString, next);
+            } else {
+              next();
+            }
+          });
+        }
+      });
+    } else {
+      customError(400, res.locals.methodsString, next, 'The "messages" field in your PUT request body should be a JSON array.');
+    }
+  } else {
+    next();
+  }
+});
+
+app.use('/api/v1/logs/:name', (req, res, next) => {
+  if ('name' in req.body) {
+    db.updateLogName(res.locals.log._id, req.body.name, (err) => {
+      if (err) {
+        customError(500, res.locals.methodsString, next);
+      } else {
+        res.locals.newLogName = req.body.name;
+        next();
+      }
+    });
+  } else {
+    res.locals.newLogName = res.locals.log.name;
+    next();
+  }
+});
+
+app.put('/api/v1/logs/:name', (req, res) => {
+  res.status(200)
+  .location(`/api/v1/logs/${res.locals.newLogName}`)
+  .end();
+});
 
 /* eslint-disable no-unused-vars */
 app.use((err, req, res, next) => {
