@@ -25,11 +25,19 @@ function customError(status, methods, next, body) {
   next(throwErr);
 }
 
-function reqMediaCheck(req, res, next) {
+function reqContentCheck(req, res, next) {
   if (req.is('application/hal+json') || req.is('application/json') || req.is('json')) {
     next();
   } else {
     customError(415, res.locals.methodsString, next);
+  }
+}
+
+function reqAcceptCheck(req, res, next) {
+  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
+    next();
+  } else {
+    customError(406, res.locals.methodsString, next);
   }
 }
 
@@ -80,26 +88,22 @@ app.head('/api/v1', genericHEAD);
 
 app.options('/api/v1', genericOPTIONS);
 
-app.get('/api/v1', (req, res, next) => {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    res.status(200)
-    .set({
-      'Content-Type': 'application/hal+json',
-      Allow: res.locals.methodsString,
-    })
-    .json({
-      _links: {
-        self: { href: '/api/v1' },
-        related: [
-          { href: '/api/v1/users' },
-          { href: '/api/v1/messages' },
-          { href: '/api/v1/logs' },
-        ],
-      },
-    });
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
+app.get('/api/v1', reqAcceptCheck, (req, res) => {
+  res.status(200)
+  .set({
+    'Content-Type': 'application/hal+json',
+    Allow: res.locals.methodsString,
+  })
+  .json({
+    _links: {
+      self: { href: '/api/v1' },
+      related: [
+        { href: '/api/v1/users' },
+        { href: '/api/v1/messages' },
+        { href: '/api/v1/logs' },
+      ],
+    },
+  });
 });
 
 app.all('/api/v1/users', (req, res, next) => {
@@ -111,13 +115,7 @@ app.head('/api/v1/users', genericHEAD);
 
 app.options('/api/v1/users', genericOPTIONS);
 
-app.get('/api/v1/users', (req, res, next) => {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    next();
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
-}, (req, res, next) => {
+app.get('/api/v1/users', reqAcceptCheck, (req, res, next) => {
   db.getUsers((err, users) => {
     if (err) {
       customError(500, res.locals.methodsString, next);
@@ -143,7 +141,7 @@ app.get('/api/v1/users', (req, res, next) => {
   });
 });
 
-app.post('/api/v1/users', reqMediaCheck, jsonParser, (req, res, next) => {
+app.post('/api/v1/users', reqContentCheck, jsonParser, (req, res, next) => {
   if (req.body instanceof Object) {
     if (!('name' in req.body)) {
       customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/users is missing a "name" key/value pair in the body.');
@@ -194,42 +192,41 @@ app.delete('/api/v1/users/:name', (req, res, next) => {
   });
 });
 
-app.get('/api/v1/users/:name', (req, res, next) => {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    db.getMessages((err2, messages) => {
-      if (err2) {
-        customError(500, res.locals.methodsString, next);
-      } else {
-        const messageItems = messages.filter((message) => {
-          if (message.user_id.toString() === res.locals.user._id.toString()) {
-            return message;
-          }
-          return false;
-        }).map((message) => {
-          return { href: `/api/v1/messages/${message.ref_id}` };
-        });
-        res.status(200)
-        .set({
-          'Content-Type': 'application/hal+json',
-          Allow: res.locals.methodsString,
-        })
-        .json({
-          _links: {
-            self: { href: `/api/v1/users/${req.params.name}` },
-            collection: { href: '/api/v1/users' },
-            related: messageItems,
-          },
-          name: res.locals.user.name,
-          createdAt: res.locals.user.created_at,
-        });
-      }
-    });
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
+app.get('/api/v1/users/:name', reqAcceptCheck, (req, res, next) => {
+  db.getMessages((err2, messages) => {
+    if (err2) {
+      customError(500, res.locals.methodsString, next);
+    } else {
+      res.locals.messages = messages;
+      next();
+    }
+  });
+}, (req, res) => {
+  const messageItems = res.locals.messages.filter((message) => {
+    if (message.user_id.toString() === res.locals.user._id.toString()) {
+      return message;
+    }
+    return false;
+  }).map((message) => {
+    return { href: `/api/v1/messages/${message.ref_id}` };
+  });
+  res.status(200)
+  .set({
+    'Content-Type': 'application/hal+json',
+    Allow: res.locals.methodsString,
+  })
+  .json({
+    _links: {
+      self: { href: `/api/v1/users/${req.params.name}` },
+      collection: { href: '/api/v1/users' },
+      related: messageItems,
+    },
+    name: res.locals.user.name,
+    createdAt: res.locals.user.created_at,
+  });
 });
 
-app.use('/api/v1/users/:name', reqMediaCheck, jsonParser, bodyObjectCheck);
+app.use('/api/v1/users/:name', reqContentCheck, jsonParser, bodyObjectCheck);
 
 app.use('/api/v1/users/:name', (req, res, next) => {
   if ('name' in req.body) {
@@ -289,7 +286,7 @@ app.get('/api/v1/messages', (req, res, next) => {
   }
 });
 
-app.post('/api/v1/messages', reqMediaCheck, jsonParser, (req, res, next) => {
+app.post('/api/v1/messages', reqContentCheck, jsonParser, (req, res, next) => {
   if (req.body instanceof Object) {
     if (!('user' in req.body)) {
       customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/messsages is missing a "user" key/value pair in the body.');
@@ -394,7 +391,7 @@ app.get('/api/v1/messages/:ref_id', (req, res, next) => {
   }
 });
 
-app.use('/api/v1/messages/:ref_id', reqMediaCheck, jsonParser, bodyObjectCheck);
+app.use('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, bodyObjectCheck);
 
 app.use('/api/v1/messages/:ref_id', (req, res, next) => {
   if ('user' in req.body) {
@@ -472,7 +469,7 @@ app.get('/api/v1/logs', (req, res, next) => {
   }
 });
 
-app.post('/api/v1/logs', reqMediaCheck, jsonParser, (req, res, next) => {
+app.post('/api/v1/logs', reqContentCheck, jsonParser, (req, res, next) => {
   if (req.body instanceof Object) {
     if (!('name' in req.body)) {
       customError(400, res.locals.methodsString, next, 'Your POST request to /api/v1/logs is missing a "name" key/value pair in the body.');
@@ -615,7 +612,7 @@ app.get('/api/v1/logs/:name', (req, res, next) => {
   }
 });
 
-app.use('/api/v1/logs/:name', reqMediaCheck, jsonParser, bodyObjectCheck);
+app.use('/api/v1/logs/:name', reqContentCheck, jsonParser, bodyObjectCheck);
 
 app.use('/api/v1/logs/:name', (req, res, next) => {
   if ('users' in req.body) {
