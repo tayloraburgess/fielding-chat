@@ -13,6 +13,7 @@
     "eslint": "^3.4.0",
     "eslint-config-airbnb": "^10.0.1",
     "eslint-plugin-import": "^1.14.0",
+    "jsdox": "^0.4.10",
     "mocha": "^3.0.2"
   },
   "scripts": {
@@ -20,7 +21,8 @@
     "test": "NODE_ENV=development mocha --compilers js:babel-register",
     "lint": "eslint ./src",
     "babel": "babel src -d lib",
-    "serve": "NODE_ENV=development node lib/server.js"
+    "serve": "NODE_ENV=development node lib/server.js",
+    "docs":  "jsdox --output docs src/db.js; jsdox --output docs src/api-functions.js"
   },
   "repository": {
     "type": "git",
