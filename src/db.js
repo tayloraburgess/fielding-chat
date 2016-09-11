@@ -7,6 +7,15 @@ import {
   Log,
 } from './models.js';
 
+/** 
+  * Wrapper functions for Mongoose MongoDB queries, specific to this API.
+  * @module api
+*/
+
+/** 
+  * Connects to database 'dbName'. 
+  * Runs callback with an error if connection fails.
+*/
 export function connect(dbName, callback = null) {
   mongoose.connect(dbName, (err) => {
     if (callback) {
@@ -19,6 +28,10 @@ export function connect(dbName, callback = null) {
   });
 }
 
+/** 
+  * Disconnects from existing MongoDB connection. 
+  * Runs callback with an error if disconnect fails.
+*/
 export function disconnect(callback = null) {
   mongoose.connection.close((err) => {
     if (callback) {
@@ -30,7 +43,10 @@ export function disconnect(callback = null) {
     }
   });
 }
-
+/** 
+  * Drops all documents from currently connected database.
+  * If drop fails, runs callback with an error.
+*/
 export function drop(callback = null) {
   mongoose.connection.db.dropDatabase((err) => {
     if (callback) {
@@ -43,6 +59,10 @@ export function drop(callback = null) {
   });
 }
 
+/** 
+  * Gets all User documents from database.
+  * If it fails to get them, runs callback with an error.
+*/
 export function getUsers(callback = null) {
 /* eslint-disable array-callback-return */
   User.find((err, users) => {
@@ -57,6 +77,10 @@ export function getUsers(callback = null) {
   });
 }
 
+/** 
+  * Gets a User from the database with the input '_id' property.
+  * If it fails to get the User, runs callback with an error.
+*/
 export function getUserById(userId, callback = null) {
   User.findById(userId, (err, user) => {
     if (callback) {
@@ -69,6 +93,12 @@ export function getUserById(userId, callback = null) {
   });
 }
 
+/** 
+  * Get a User from the database with the input 'name' property.
+  * If it fails to get the User, runs callback with an error.
+  * If there is more than one User with that name (shouldn't be based on
+  * createUser() functionality), puts an array of Users in the callback.
+*/
 export function getUserByName(name, callback = null) {
   const query = {};
   if (Array.isArray(name)) {
@@ -91,6 +121,12 @@ export function getUserByName(name, callback = null) {
   });
 }
 
+/** 
+  * Creates a new User in the database with the input 'name' property.
+  * First checks to make sure no other Users with that name exist using getUsers().
+  * If it fails to create the new User, runs callback with an error.
+  * If the User is created, returns the user in the callback.
+*/
 export function createUser(name, callback = null) {
   getUsers((err1, res) => {
     const filteredUsers = res.filter((user) => {
@@ -119,24 +155,51 @@ export function createUser(name, callback = null) {
   });
 }
 
+/** 
+  * Updates the 'name' property of the User with the input '_id'.
+  * First checks to make sure the User exists.
+  * Then checks to make sure the 'name' property isn't already taken by another user.
+  * If it fails to update the User, or the User doesn't exist, runs callback with an error.
+  * If the User is updated, returns a Mongoose response object.
+*/
 export function updateUserName(userId, newName, callback = null) {
   getUserById(userId, (err1, userRes) => {
     if (err1 && callback) {
       callback(err1);
+    } else if (userRes.name === newName) {
+      callback(null, null);
     } else {
-      User.update({ _id: userRes._id }, { name: newName }, {}, (err2, res) => {
-        if (callback) {
-          if (err2) {
-            callback(err2, null);
-          } else {
-            callback(null, res);
+      getUsers((err2, usersRes) => {
+        const filteredUsers = usersRes.filter((user) => {
+          if (user.name === newName) {
+            return user;
           }
+          return false;
+        });
+        if (filteredUsers.length === 0) {
+          User.update({ _id: userRes._id }, { name: newName }, {}, (err3, res) => {
+            if (callback) {
+              if (err3) {
+                callback(err3, null);
+              } else {
+                callback(null, res);
+              }
+            }
+          });
+        } else {
+          callback(new Error(), null);
         }
       });
     }
   });
 }
 
+/** 
+  * Removes the user with the input '_id' property from the Log with input '_id'.
+  * First checks to make sure the User exists.
+  * Then checks to make sure the Log exists.
+  * If the Log or the User doesn't exist, runs callback with an error.
+*/
 export function removeUserFromLog(logId, userId, callback = null) {
   getUserById(userId, (err1, userRes) => {
     if (err1 && callback) {
@@ -159,6 +222,12 @@ export function removeUserFromLog(logId, userId, callback = null) {
   });
 }
 
+/** 
+  * Removes the User with the input '_id' property from all Logs.
+  * First checks to make sure the User exists.
+  * Then pulls all Users with the input '_id' from all 'user_ids' Log properties in the database.
+  * If User doesn't exist, or the update fails, runs callback with an error.
+*/
 export function removeUserFromAllLogs(userId, callback = null) {
   getUserById(userId, (err1, userRes) => {
     if (err1 && callback) {
@@ -175,6 +244,12 @@ export function removeUserFromAllLogs(userId, callback = null) {
   });
 }
 
+/** 
+  * Deletes all Messages associated with the user with the input '_id' property.
+  * First checks to make sure the User exists.
+  * Then deletes all messages with the input User '_id' in their 'user_id' property.
+  * If User doesn't exist, or the update fails, runs callback with an error.
+*/
 export function deleteUserMessages(userId, callback = null) {
   getUserById(userId, (err1, userRes) => {
     if (err1 && callback) {
@@ -191,6 +266,12 @@ export function deleteUserMessages(userId, callback = null) {
   });
 }
 
+/** 
+  * Deletes a User with the input '_id' property.
+  * First checks to make sure the User exists.
+  * Then deletes all messages associated with the User, and removes the User from all Logs containing it.
+  * If User doesn't exist, or any stage of removal fails, runs callback with an error.
+*/
 export function deleteUser(userId, callback = null) {
   getUserById(userId, (err1, userRes) => {
     if (err1 & callback) {
@@ -225,6 +306,10 @@ export function deleteUser(userId, callback = null) {
   });
 }
 
+/** 
+  * Gets all Message documents from database.
+  * If it fails to get them, runs callback with an error.
+*/
 export function getMessages(callback = null) {
 /* eslint-disable array-callback-return */
   Message.find((err, messages) => {
@@ -239,6 +324,10 @@ export function getMessages(callback = null) {
   });
 }
 
+/** 
+  * Gets a Message from the database with the input '_id' property.
+  * If it fails to get the Message, runs callback with an error.
+*/
 export function getMessageById(messageId, callback = null) {
   Message.findById(messageId, (err, message) => {
     if (callback) {
@@ -251,6 +340,10 @@ export function getMessageById(messageId, callback = null) {
   });
 }
 
+/** 
+  * Get a Message from the database with the input 'ref_id' property.
+  * If it fails to get the Message, runs callback with an error.
+*/
 export function getMessageByRefId(refId, callback = null) {
   const query = {};
   if (Array.isArray(refId)) {
@@ -273,6 +366,12 @@ export function getMessageByRefId(refId, callback = null) {
   });
 }
 
+/** 
+  * Creates a new Message in the database with the input 'user_id' and 'name' properties.
+  * First creates a new 'ref_id' but incrementing the one most recently added to the database.
+  * If it fails to create the new Message, runs callback with an error.
+  * If the Message is created, returns the Message in the callback.
+*/
 export function createMessage(userId, text, callback = null) {
   getMessages((err1, res) => {
     let refId;
@@ -299,6 +398,12 @@ export function createMessage(userId, text, callback = null) {
   });
 }
 
+/** 
+  * Updates the 'text' property of the Message with the input '_id'.
+  * First checks to make sure the Message exists.
+  * If it fails to update the Message, or the Message doesn't exist, runs callback with an error.
+  * If the Message is updated, returns a Mongoose response object.
+*/
 export function updateMessageText(msgId, newText, callback = null) {
   getMessageById(msgId, (err1, msgRes) => {
     if (err1 & callback) {
@@ -317,6 +422,13 @@ export function updateMessageText(msgId, newText, callback = null) {
   });
 }
 
+/** 
+  * Updates the 'user_id' property of the Message with the input '_id'.
+  * First checks to make sure the Message exists.
+  * Then checks to make sure the input User exists.
+  * If it fails to update the Message, or the Message or User doesn't exist, runs callback with an error.
+  * If the Message is updated, returns a Mongoose response object.
+*/
 export function updateMessageUser(msgId, userId, callback = null) {
   getMessageById(msgId, (err1, msgRes) => {
     if (err1 & callback) {
@@ -341,6 +453,12 @@ export function updateMessageUser(msgId, userId, callback = null) {
   });
 }
 
+/** 
+  * Removes the Message with the input '_id' property from the Log with input '_id'.
+  * First checks to make sure the Message exists.
+  * Then checks to make sure the Log exists.
+  * If the Log or the Message doesn't exist, runs callback with an error.
+*/
 export function removeMessageFromLog(logId, msgId, callback = null) {
   getMessageById(msgId, (err1, msgRes) => {
     if (err1 & callback) {
@@ -363,6 +481,11 @@ export function removeMessageFromLog(logId, msgId, callback = null) {
   });
 }
 
+/** 
+  * Removes the Message (or Messages) with the input '_id' (or '_id's) property from all Logs.
+  * Pulls the message/messages with the input '_id'(s) from all 'message_ids' Log properties in the database.
+  * If the update fails, runs callback with an error.
+*/
 export function removeMessageFromAllLogs(msgId, callback = null) {
   if (Array.isArray(msgId)) {
     Log.update({ }, { $pullAll: { message_ids: msgId } }, { multi: true }, (err) => {
@@ -383,6 +506,12 @@ export function removeMessageFromAllLogs(msgId, callback = null) {
   }
 }
 
+/** 
+  * Deletes a Message with the input '_id' property.
+  * First checks to make sure the Message exists.
+  * Then removes the Message from all Logs associated with it.
+  * If Message doesn't exist, or any stage of removal fails, runs callback with an error.
+*/
 export function deleteMessage(msgId, callback = null) {
   getMessageById(msgId, (err1, msgRes) => {
     if (err1 & callback) {
@@ -405,24 +534,46 @@ export function deleteMessage(msgId, callback = null) {
   });
 }
 
+/** 
+  * Creates a new Log in the database with the input 'user_ids' and 'message_ids' properties.
+  * If it fails to create the new Log, runs callback with an error.
+  * If a Log of the same input name already exists, it puts the existing Log in the callback.
+  * If the Log is created, returns the Log in the callback.
+*/
 export function createLog(userIds, messageIds, name, callback = null) {
-  const newLog = new Log({
-    user_ids: userIds,
-    message_ids: messageIds,
-    name,
-    created_at: new Date(),
-  });
-  newLog.save((err, resLog) => {
-    if (callback) {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, resLog);
+  getLogs((err1, res) => {
+    const filteredLogs = res.filter((log) => {
+      if (log.name === name) {
+        return log;
       }
+      return false;
+    });
+    if (filteredLogs.length === 0) {
+      const newLog = new Log({
+        user_ids: userIds,
+        message_ids: messageIds,
+        name,
+        created_at: new Date(),
+      });
+      newLog.save((err, resLog) => {
+        if (callback) {
+          if (err) {
+            callback(err, null);
+          } else {
+            callback(null, resLog);
+          }
+        }
+      });
+    } else if (callback) {
+      callback(null, filteredLogs[0]);
     }
   });
 }
 
+/** 
+  * Gets all Log documents from database.
+  * If it fails to get them, runs callback with an error.
+*/
 export function getLogs(callback = null) {
 /* eslint-disable array-callback-return */
   Log.find((err, logs) => {
@@ -437,6 +588,10 @@ export function getLogs(callback = null) {
   });
 }
 
+/** 
+  * Gets a Log from the database with the input '_id' property.
+  * If it fails to get the Log, runs callback with an error.
+*/
 export function getLogById(logId, callback = null) {
   Log.findById(logId, (err, log) => {
     if (callback) {
@@ -449,6 +604,12 @@ export function getLogById(logId, callback = null) {
   });
 }
 
+/** 
+  * Get a Log from the database with the input 'name' property.
+  * If it fails to get the Message, runs callback with an error.
+  * If there is more than one Log with that name (shouldn't be based on
+  * createLog() functionality), puts an array of Logs in the callback.
+*/
 export function getLogByName(name, callback = null) {
   const query = {};
   if (Array.isArray(name)) {
@@ -471,24 +632,51 @@ export function getLogByName(name, callback = null) {
   });
 }
 
+/** 
+  * Updates the 'name' property of the Log with the input '_id'.
+  * First checks to make sure the Log exists.
+  * Then checks to make sure an existing Log doesn't have the same 'name' property.
+  * If it fails to update the Log, or the Log doesn't exist, runs callback with an error.
+  * If the Log is updated, returns a Mongoose response object.
+*/
 export function updateLogName(logId, newName, callback = null) {
   getLogById(logId, (err1, logRes) => {
     if (err1 & callback) {
       callback(err1);
+    } else if (logRes.name === newName) {
+      callback(null, null);
     } else {
-      Log.update({ _id: logRes._id }, { name: newName }, {}, (err2, res) => {
-        if (callback) {
-          if (err2) {
-            callback(err2, null);
-          } else {
-            callback(null, res);
+      getLogs((err2, logsRes) => {
+        const filteredLogs = logsRes.filter((log) => {
+          if (log.name === newName) {
+            return log;
           }
+          return false;
+        });
+        if (filteredLogs.length === 0) {
+          Log.update({ _id: logRes._id }, { name: newName }, {}, (err3, res) => {
+            if (callback) {
+              if (err3) {
+                callback(err3, null);
+              } else {
+                callback(null, res);
+              }
+            }
+          });
+        } else {
+          callback(new Error(), null);
         }
       });
     }
   });
 }
 
+/** 
+  * Updates the 'user_ids' property of the Log with the input '_id'.
+  * First checks to make sure the Log exists.
+  * If it fails to update the Log, or the Log doesn't exist, runs callback with an error.
+  * If the Log is updated, returns a Mongoose response object.
+*/
 export function updateLogUsers(logId, newUsers, callback = null) {
   getLogById(logId, (err1, logRes) => {
     if (err1 & callback) {
@@ -507,6 +695,12 @@ export function updateLogUsers(logId, newUsers, callback = null) {
   });
 }
 
+/** 
+  * Updates the 'message_ids' property of the Log with the input '_id'.
+  * First checks to make sure the Log exists.
+  * If it fails to update the Log, or the Log doesn't exist, runs callback with an error.
+  * If the Log is updated, returns a Mongoose response object.
+*/
 export function updateLogMessages(logId, newMessages, callback = null) {
   getLogById(logId, (err1, logRes) => {
     if (err1 & callback) {
@@ -525,6 +719,11 @@ export function updateLogMessages(logId, newMessages, callback = null) {
   });
 }
 
+/** 
+  * Deletes a Log with the input '_id' property.
+  * First checks to make sure the Log exists.
+  * If Log doesn't exist, or the removal fails, runs callback with an error.
+*/
 export function deleteLog(logId, callback = null) {
   getLogById(logId, (err1, logRes) => {
     if (err1 & callback) {

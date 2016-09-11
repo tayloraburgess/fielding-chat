@@ -385,7 +385,7 @@ describe('API', () => {
 
     describe('PUT', () => {
       describe('name', () => {
-        const body = { name: userNames[1] };
+        const body = { name: userNames[2] };
         genericPUT(`/api/v1/users/${userNames[0]}`, body);
       });
     });
