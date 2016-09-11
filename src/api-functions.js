@@ -1,6 +1,6 @@
 import * as db from './db.js';
 
-/** 
+/**
   * Helper functions & middleware for main API routes.
   * @module api
 */

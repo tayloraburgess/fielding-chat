@@ -466,7 +466,7 @@ app.put('/api/v1/logs/:name', api.reqContentCheck, jsonParser, api.reqBodyObject
           } else {
             msgIds = [msgRes];
           }
-          db.updateLogUsers(res.locals.log._id, msgIds, (err2) => {
+          db.updateLogMessages(res.locals.log._id, msgIds, (err2) => {
             if (err2) {
               api.customError(500, res.locals.methodsString, next);
             } else {

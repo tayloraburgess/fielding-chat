@@ -4,7 +4,7 @@
 
 A RESTful API chat server. Built using [node.js](https://nodejs.org/), [express.js](http://expressjs.com/), [babel](https://babeljs.io/) (for ES6 compilation), [MongoDB](https://www.mongodb.com/), and [mocha](http://mochajs.org/) (for testing).
 
-## Development 
+## Development
 
 1. Fork this repository, and clone into an appropriate directory.
 

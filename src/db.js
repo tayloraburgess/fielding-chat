@@ -7,13 +7,13 @@ import {
   Log,
 } from './models.js';
 
-/** 
+/**
   * Wrapper functions for Mongoose MongoDB queries, specific to this API.
   * @module db
 */
 
-/** 
-  * Connects to database 'dbName'. 
+/**
+  * Connects to database 'dbName'.
   * Runs callback with an error if connection fails.
 */
 export function connect(dbName, callback = null) {
@@ -28,8 +28,8 @@ export function connect(dbName, callback = null) {
   });
 }
 
-/** 
-  * Disconnects from existing MongoDB connection. 
+/**
+  * Disconnects from existing MongoDB connection.
   * Runs callback with an error if disconnect fails.
 */
 export function disconnect(callback = null) {
@@ -43,7 +43,7 @@ export function disconnect(callback = null) {
     }
   });
 }
-/** 
+/**
   * Drops all documents from currently connected database.
   * If drop fails, runs callback with an error.
 */
@@ -59,7 +59,7 @@ export function drop(callback = null) {
   });
 }
 
-/** 
+/**
   * Gets all User documents from database.
   * If it fails to get them, runs callback with an error.
 */
@@ -77,7 +77,7 @@ export function getUsers(callback = null) {
   });
 }
 
-/** 
+/**
   * Gets a User from the database with the input '_id' property.
   * If it fails to get the User, runs callback with an error.
 */
@@ -93,7 +93,7 @@ export function getUserById(userId, callback = null) {
   });
 }
 
-/** 
+/**
   * Get a User from the database with the input 'name' property.
   * If it fails to get the User, runs callback with an error.
   * If there is more than one User with that name (shouldn't be based on
@@ -121,7 +121,7 @@ export function getUserByName(name, callback = null) {
   });
 }
 
-/** 
+/**
   * Creates a new User in the database with the input 'name' property.
   * First checks to make sure no other Users with that name exist using getUsers().
   * If it fails to create the new User, runs callback with an error.
@@ -155,7 +155,7 @@ export function createUser(name, callback = null) {
   });
 }
 
-/** 
+/**
   * Updates the 'name' property of the User with the input '_id'.
   * First checks to make sure the User exists.
   * Then checks to make sure the 'name' property isn't already taken by another user.
@@ -194,7 +194,7 @@ export function updateUserName(userId, newName, callback = null) {
   });
 }
 
-/** 
+/**
   * Removes the user with the input '_id' property from the Log with input '_id'.
   * First checks to make sure the User exists.
   * Then checks to make sure the Log exists.
@@ -222,7 +222,7 @@ export function removeUserFromLog(logId, userId, callback = null) {
   });
 }
 
-/** 
+/**
   * Removes the User with the input '_id' property from all Logs.
   * First checks to make sure the User exists.
   * Then pulls all Users with the input '_id' from all 'user_ids' Log properties in the database.
@@ -244,7 +244,7 @@ export function removeUserFromAllLogs(userId, callback = null) {
   });
 }
 
-/** 
+/**
   * Deletes all Messages associated with the user with the input '_id' property.
   * First checks to make sure the User exists.
   * Then deletes all messages with the input User '_id' in their 'user_id' property.
@@ -266,7 +266,7 @@ export function deleteUserMessages(userId, callback = null) {
   });
 }
 
-/** 
+/**
   * Deletes a User with the input '_id' property.
   * First checks to make sure the User exists.
   * Then deletes all messages associated with the User, and removes the User from all Logs containing it.
@@ -306,7 +306,7 @@ export function deleteUser(userId, callback = null) {
   });
 }
 
-/** 
+/**
   * Gets all Message documents from database.
   * If it fails to get them, runs callback with an error.
 */
@@ -324,7 +324,7 @@ export function getMessages(callback = null) {
   });
 }
 
-/** 
+/**
   * Gets a Message from the database with the input '_id' property.
   * If it fails to get the Message, runs callback with an error.
 */
@@ -340,7 +340,7 @@ export function getMessageById(messageId, callback = null) {
   });
 }
 
-/** 
+/**
   * Get a Message from the database with the input 'ref_id' property.
   * If it fails to get the Message, runs callback with an error.
 */
@@ -366,7 +366,7 @@ export function getMessageByRefId(refId, callback = null) {
   });
 }
 
-/** 
+/**
   * Creates a new Message in the database with the input 'user_id' and 'name' properties.
   * First creates a new 'ref_id' but incrementing the one most recently added to the database.
   * If it fails to create the new Message, runs callback with an error.
@@ -398,7 +398,7 @@ export function createMessage(userId, text, callback = null) {
   });
 }
 
-/** 
+/**
   * Updates the 'text' property of the Message with the input '_id'.
   * First checks to make sure the Message exists.
   * If it fails to update the Message, or the Message doesn't exist, runs callback with an error.
@@ -422,7 +422,7 @@ export function updateMessageText(msgId, newText, callback = null) {
   });
 }
 
-/** 
+/**
   * Updates the 'user_id' property of the Message with the input '_id'.
   * First checks to make sure the Message exists.
   * Then checks to make sure the input User exists.
@@ -453,7 +453,7 @@ export function updateMessageUser(msgId, userId, callback = null) {
   });
 }
 
-/** 
+/**
   * Removes the Message with the input '_id' property from the Log with input '_id'.
   * First checks to make sure the Message exists.
   * Then checks to make sure the Log exists.
@@ -481,7 +481,7 @@ export function removeMessageFromLog(logId, msgId, callback = null) {
   });
 }
 
-/** 
+/**
   * Removes the Message (or Messages) with the input '_id' (or '_id's) property from all Logs.
   * Pulls the message/messages with the input '_id'(s) from all 'message_ids' Log properties in the database.
   * If the update fails, runs callback with an error.
@@ -506,7 +506,7 @@ export function removeMessageFromAllLogs(msgId, callback = null) {
   }
 }
 
-/** 
+/**
   * Deletes a Message with the input '_id' property.
   * First checks to make sure the Message exists.
   * Then removes the Message from all Logs associated with it.
@@ -534,7 +534,7 @@ export function deleteMessage(msgId, callback = null) {
   });
 }
 
-/** 
+/**
   * Creates a new Log in the database with the input 'user_ids' and 'message_ids' properties.
   * If it fails to create the new Log, runs callback with an error.
   * If a Log of the same input name already exists, it puts the existing Log in the callback.
@@ -570,7 +570,7 @@ export function createLog(userIds, messageIds, name, callback = null) {
   });
 }
 
-/** 
+/**
   * Gets all Log documents from database.
   * If it fails to get them, runs callback with an error.
 */
@@ -588,7 +588,7 @@ export function getLogs(callback = null) {
   });
 }
 
-/** 
+/**
   * Gets a Log from the database with the input '_id' property.
   * If it fails to get the Log, runs callback with an error.
 */
@@ -604,7 +604,7 @@ export function getLogById(logId, callback = null) {
   });
 }
 
-/** 
+/**
   * Get a Log from the database with the input 'name' property.
   * If it fails to get the Message, runs callback with an error.
   * If there is more than one Log with that name (shouldn't be based on
@@ -632,7 +632,7 @@ export function getLogByName(name, callback = null) {
   });
 }
 
-/** 
+/**
   * Updates the 'name' property of the Log with the input '_id'.
   * First checks to make sure the Log exists.
   * Then checks to make sure an existing Log doesn't have the same 'name' property.
@@ -671,7 +671,7 @@ export function updateLogName(logId, newName, callback = null) {
   });
 }
 
-/** 
+/**
   * Updates the 'user_ids' property of the Log with the input '_id'.
   * First checks to make sure the Log exists.
   * If it fails to update the Log, or the Log doesn't exist, runs callback with an error.
@@ -695,7 +695,7 @@ export function updateLogUsers(logId, newUsers, callback = null) {
   });
 }
 
-/** 
+/**
   * Updates the 'message_ids' property of the Log with the input '_id'.
   * First checks to make sure the Log exists.
   * If it fails to update the Log, or the Log doesn't exist, runs callback with an error.
@@ -719,7 +719,7 @@ export function updateLogMessages(logId, newMessages, callback = null) {
   });
 }
 
-/** 
+/**
   * Deletes a Log with the input '_id' property.
   * First checks to make sure the Log exists.
   * If Log doesn't exist, or the removal fails, runs callback with an error.
