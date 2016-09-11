@@ -1,5 +1,7 @@
 # fielding-chat
 
+[![Build Status](https://travis-ci.org/tayloraburgess/fielding-chat.svg?branch=master)](https://travis-ci.org/tayloraburgess/fielding-chat)
+
 A RESTful API chat server. Built using [node.js](https://nodejs.org/), [express.js](http://expressjs.com/), [babel](https://babeljs.io/) (for ES6 compilation), [MongoDB](https://www.mongodb.com/), and [mocha](http://mochajs.org/) (for testing).
 
 ## Development
