@@ -79,41 +79,9 @@ function reqBodyObjectCheck(req, res, next) {
   }
 }
 
-function reqBodyNameCheck(req, res, next) {
-  if (!('name' in req.body)) {
-    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "name" property in the body.`);
-  } else {
-    next();
-  }
-}
-
-function reqBodyUserCheck(req, res, next) {
-  if (!('user' in req.body)) {
-    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "user" property in the body.`);
-  } else {
-    next();
-  }
-}
-
-function reqBodyTextCheck(req, res, next) {
-  if (!('text' in req.body)) {
-    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "text" property in the body.`);
-  } else {
-    next();
-  }
-}
-
-function reqBodyUsersCheck(req, res, next) {
-  if (!('users' in req.body)) {
-    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "users" property in the body.`);
-  } else {
-    next();
-  }
-}
-
-function reqBodyMessagesCheck(req, res, next) {
-  if (!('messages' in req.body)) {
-    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "messages" property in the body.`);
+function reqBodyPropertyCheck(property, req, res, next) {
+  if (!(property in req.body)) {
+    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "${property}" property in the body.`);
   } else {
     next();
   }
@@ -174,6 +142,17 @@ function resGetMessageByRefId(refId, req, res, next) {
   });
 }
 
+function resGetLogByName(name, req, res, next) {
+  db.getLogByName(name, (err1, logRes) => {
+    if (err1) {
+      customError(404, res.locals.methodsString, next, `${name} isn't an existing log.`);
+    } else {
+      res.locals.log = logRes;
+      next();
+    }
+  });
+}
+
 app.all('/api/v1', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET'];
   next();
@@ -227,7 +206,9 @@ app.get('/api/v1/users', reqAcceptCheck, resGetUsers, (req, res) => {
   });
 });
 
-app.post('/api/v1/users', reqContentCheck, jsonParser, reqBodyObjectCheck, reqBodyNameCheck, (req, res, next) => {
+app.post('/api/v1/users', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
+  reqBodyPropertyCheck('name', req, res, next);
+}, (req, res, next) => {
   db.createUser(req.body.name, (err, userRes) => {
     if (err) {
       customError(500, res.locals.methodsString, next);
@@ -242,17 +223,8 @@ app.post('/api/v1/users', reqContentCheck, jsonParser, reqBodyObjectCheck, reqBo
 app.all('/api/v1/users/:name', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, reqCheckMethods);
-
-app.use('/api/v1/users/:name', (req, res, next) => {
-  db.getUserByName(req.params.name, (err, user) => {
-    if (err) {
-      customError(404, res.locals.methodsString, next, `${req.params.name} isn't an existing user.`);
-    } else {
-      res.locals.user = user;
-      next();
-    }
-  });
+}, reqCheckMethods, (req, res, next) => {
+  resGetUserByName(req.params.name, req, res, next);
 });
 
 app.head('/api/v1/users/:name', genericHEAD);
@@ -345,7 +317,11 @@ app.get('/api/v1/messages', reqAcceptCheck, resGetMessages, (req, res) => {
   });
 });
 
-app.post('/api/v1/messages', reqContentCheck, jsonParser, reqBodyObjectCheck, reqBodyUserCheck, reqBodyTextCheck, (req, res, next) => {
+app.post('/api/v1/messages', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
+  reqBodyPropertyCheck('user', req, res, next);
+}, (req, res, next) => {
+  reqBodyPropertyCheck('text', req, res, next);
+}, (req, res, next) => {
   resGetUserByName(req.body.user, req, res, next);
 }, (req, res, next) => {
   db.createMessage(res.locals.user._id, req.body.text, (err2, msgRes) => {
@@ -362,17 +338,8 @@ app.post('/api/v1/messages', reqContentCheck, jsonParser, reqBodyObjectCheck, re
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, reqCheckMethods);
-
-app.use('/api/v1/messages/:ref_id', (req, res, next) => {
-  db.getMessageByRefId(req.params.ref_id, (err, message) => {
-    if (err) {
-      customError(404, res.locals.methodsString, next, `${req.params.ref_id} isn't an existing message.`);
-    } else {
-      res.locals.message = message;
-      next();
-    }
-  });
+}, reqCheckMethods, (req, res, next) => {
+  resGetMessageByRefId(req.params.ref_id, req, res, next);
 });
 
 app.head('/api/v1/messages/:ref_id', genericHEAD);
@@ -497,7 +464,13 @@ app.get('/api/v1/logs', reqAcceptCheck, resGetLogs, (req, res) => {
   });
 });
 
-app.post('/api/v1/logs', reqContentCheck, jsonParser, reqBodyObjectCheck, reqBodyNameCheck, reqBodyUsersCheck, reqBodyMessagesCheck, (req, res, next) => {
+app.post('/api/v1/logs', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
+  reqBodyPropertyCheck('name', req, res, next);
+}, (req, res, next) => {
+  reqBodyPropertyCheck('users', req, res, next);
+}, (req, res, next) => {
+  reqBodyPropertyCheck('messages', req, res, next);
+}, (req, res, next) => {
   if (!(Array.isArray(req.body.users))) {
     customError(400, res.locals.methodsString, next, 'The "users" property in your POST request body should be a JSON array.');
   } else if (!(Array.isArray(req.body.messages))) {
@@ -527,20 +500,11 @@ app.post('/api/v1/logs', reqContentCheck, jsonParser, reqBodyObjectCheck, reqBod
   });
 });
 
-app.use('/api/v1/logs/:name', (req, res, next) => {
+app.all('/api/v1/logs/:name', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, reqCheckMethods);
-
-app.use('/api/v1/logs/:name', (req, res, next) => {
-  db.getLogByName(req.params.name, (err, log) => {
-    if (err) {
-      customError(404, res.locals.methodsString, next, `${req.params.name} isn't an existing log.`);
-    } else {
-      res.locals.log = log;
-      next();
-    }
-  });
+}, reqCheckMethods, (req, res, next) => {
+  resGetLogByName(req.params.name, req, res, next);
 });
 
 app.head('/api/v1/logs/:name', genericHEAD);
