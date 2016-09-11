@@ -4,7 +4,7 @@
 
 A RESTful API chat server. Built using [node.js](https://nodejs.org/), [express.js](http://expressjs.com/), [babel](https://babeljs.io/) (for ES6 compilation), [MongoDB](https://www.mongodb.com/), and [mocha](http://mochajs.org/) (for testing).
 
-## Development
+## Development 
 
 1. Fork this repository, and clone into an appropriate directory.
 
@@ -99,7 +99,7 @@ At this endpoint, you can:
 
 ### /api/v1/logs
 
-Logs are highest-level resource in the API. Each log has a name, and also has a list of users and a list of messages. It's up to you how to use that represented information, though. For example, logs can have an unlimited number of users attached to them--but you could articifically limit it to just two users in your application if you don't want group chats.
+Logs are highest-level resource in the API. Each log has a name, and also has a list of users and a list of messages. It's up to you how to use that represented information, though. For example, logs can have an unlimited number of users in their 'users' property--but you could articifically limit it to just two users in your application if you don't want group chats. Essentially, logs are what allow users to share a stream of messages with each other--but it's a bit open-ended.
 
 Like the other endpoints, you can POST in this format:
 
