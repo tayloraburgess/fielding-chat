@@ -3,166 +3,22 @@
 import 'babel-polyfill';
 import express from 'express';
 import * as bodyParser from 'body-parser';
+import * as api from './api-functions.js';
 import * as db from './db.js';
 
 const app = express();
 const jsonParser = bodyParser.json();
 
-function customError(status, methods, next, body) {
-  let throwErr;
-  if (status === 406) {
-    throwErr = new Error('Invalid hypermedia type. Try Accept: "application/hal+json" instead.');
-  } else if (status === 415) {
-    throwErr = new Error('Invalid hypermedia type in your request. Try Content-Type: "application/hal+json" instead.');
-  } else if (status === 500) {
-    throwErr = new Error('The server failed to process your request--likely a database error. Our bad.');
-  } else {
-    throwErr = new Error(body);
-  }
-  throwErr.status = status;
-  throwErr.methods = methods;
-  throwErr.custom = true;
-  next(throwErr);
-}
-
-function genericHEAD(req, res, next) {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    res.status(200)
-    .set({
-      'Content-Type': 'application/hal+json',
-      Allow: res.locals.methodsString,
-    })
-    .end();
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
-}
-
-function genericOPTIONS(req, res) {
-  res.status(200)
-  .set({
-    Allow: res.locals.methodsString,
-  })
-  .end();
-}
-
-function reqCheckMethods(req, res, next) {
-  res.locals.methodsString = res.locals.methods.join(' ');
-  if (res.locals.methods.indexOf(req.method) > -1) {
-    next();
-  } else {
-    customError(405, res.locals.methodsString, next, `You cannot ${req.method} ${req.path}. Try ${res.locals.methodsString} instead.`);
-  }
-}
-
-function reqContentCheck(req, res, next) {
-  if (req.is('application/hal+json') || req.is('application/json') || req.is('json')) {
-    next();
-  } else {
-    customError(415, res.locals.methodsString, next);
-  }
-}
-
-function reqAcceptCheck(req, res, next) {
-  if (req.accepts(['application/hal+json', 'application/json', 'json'])) {
-    next();
-  } else {
-    customError(406, res.locals.methodsString, next);
-  }
-}
-
-function reqBodyObjectCheck(req, res, next) {
-  if (req.body instanceof Object) {
-    next();
-  } else {
-    customError(415, res.locals.methodsString, next);
-  }
-}
-
-function reqBodyPropertyCheck(property, req, res, next) {
-  if (!(property in req.body)) {
-    customError(400, res.locals.methodsString, next, `Your ${req.method} request to ${req.path} is missing a "${property}" property in the body.`);
-  } else {
-    next();
-  }
-}
-
-function resGetUsers(req, res, next) {
-  db.getUsers((err, usersRes) => {
-    if (err) {
-      customError(500, res.locals.methodsString, next);
-    } else {
-      res.locals.users = usersRes;
-      next();
-    }
-  });
-}
-
-function resGetMessages(req, res, next) {
-  db.getMessages((err, msgsRes) => {
-    if (err) {
-      customError(500, res.locals.methodsString, next);
-    } else {
-      res.locals.messages = msgsRes;
-      next();
-    }
-  });
-}
-
-function resGetLogs(req, res, next) {
-  db.getLogs((err, logsRes) => {
-    if (err) {
-      customError(500, res.locals.methodsString, next);
-    } else {
-      res.locals.logs = logsRes;
-      next();
-    }
-  });
-}
-
-function resGetUserByName(name, req, res, next) {
-  db.getUserByName(name, (err1, userRes) => {
-    if (err1) {
-      customError(404, res.locals.methodsString, next, `${name} isn't an existing user.`);
-    } else {
-      res.locals.user = userRes;
-      next();
-    }
-  });
-}
-
-function resGetMessageByRefId(refId, req, res, next) {
-  db.getMessageByRefId(refId, (err, message) => {
-    if (err) {
-      customError(404, res.locals.methodsString, next, `${refId} isn't an existing message.`);
-    } else {
-      res.locals.message = message;
-      next();
-    }
-  });
-}
-
-function resGetLogByName(name, req, res, next) {
-  db.getLogByName(name, (err1, logRes) => {
-    if (err1) {
-      customError(404, res.locals.methodsString, next, `${name} isn't an existing log.`);
-    } else {
-      res.locals.log = logRes;
-      next();
-    }
-  });
-}
-
 app.all('/api/v1', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET'];
   next();
-}, reqCheckMethods);
+}, api.reqCheckMethods);
 
-app.head('/api/v1', genericHEAD);
+app.head('/api/v1', api.genericHEAD);
 
-app.options('/api/v1', genericOPTIONS);
+app.options('/api/v1', api.genericOPTIONS);
 
-app.get('/api/v1', reqAcceptCheck, (req, res) => {
+app.get('/api/v1', api.reqAcceptCheck, (req, res) => {
   res.status(200)
   .set({
     'Content-Type': 'application/hal+json',
@@ -183,13 +39,13 @@ app.get('/api/v1', reqAcceptCheck, (req, res) => {
 app.all('/api/v1/users', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
   next();
-}, reqCheckMethods);
+}, api.reqCheckMethods);
 
-app.head('/api/v1/users', genericHEAD);
+app.head('/api/v1/users', api.genericHEAD);
 
-app.options('/api/v1/users', genericOPTIONS);
+app.options('/api/v1/users', api.genericOPTIONS);
 
-app.get('/api/v1/users', reqAcceptCheck, resGetUsers, (req, res) => {
+app.get('/api/v1/users', api.reqAcceptCheck, api.resGetUsers, (req, res) => {
   const items = res.locals.users.map((user) => {
     return { href: `/api/v1/users/${user.name}` };
   });
@@ -206,12 +62,12 @@ app.get('/api/v1/users', reqAcceptCheck, resGetUsers, (req, res) => {
   });
 });
 
-app.post('/api/v1/users', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
-  reqBodyPropertyCheck('name', req, res, next);
+app.post('/api/v1/users', api.reqContentCheck, jsonParser, api.reqBodyObjectCheck, (req, res, next) => {
+  api.reqBodyPropertyCheck('name', req, res, next);
 }, (req, res, next) => {
   db.createUser(req.body.name, (err, userRes) => {
     if (err) {
-      customError(500, res.locals.methodsString, next);
+      api.customError(500, res.locals.methodsString, next);
     } else {
       res.status(201)
       .location(`/api/v1/users/${userRes.name}`)
@@ -223,18 +79,18 @@ app.post('/api/v1/users', reqContentCheck, jsonParser, reqBodyObjectCheck, (req,
 app.all('/api/v1/users/:name', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, reqCheckMethods, (req, res, next) => {
-  resGetUserByName(req.params.name, req, res, next);
+}, api.reqCheckMethods, (req, res, next) => {
+  api.resGetUserByName(req.params.name, req, res, next);
 });
 
-app.head('/api/v1/users/:name', genericHEAD);
+app.head('/api/v1/users/:name', api.genericHEAD);
 
-app.options('/api/v1/users/:name', genericOPTIONS);
+app.options('/api/v1/users/:name', api.genericOPTIONS);
 
 app.delete('/api/v1/users/:name', (req, res, next) => {
   db.deleteUser(res.locals.user._id, (err) => {
     if (err) {
-      customError(500, res.locals.methodsString, next);
+      api.customError(500, res.locals.methodsString, next);
     } else {
       res.status(204)
       .end();
@@ -242,7 +98,7 @@ app.delete('/api/v1/users/:name', (req, res, next) => {
   });
 });
 
-app.get('/api/v1/users/:name', reqAcceptCheck, resGetMessages, (req, res) => {
+app.get('/api/v1/users/:name', api.reqAcceptCheck, api.resGetMessages, (req, res) => {
   const messageItems = res.locals.messages.filter((message) => {
     if (message.user_id.toString() === res.locals.user._id.toString()) {
       return message;
@@ -267,11 +123,11 @@ app.get('/api/v1/users/:name', reqAcceptCheck, resGetMessages, (req, res) => {
   });
 });
 
-app.put('/api/v1/users/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
+app.put('/api/v1/users/:name', api.reqContentCheck, jsonParser, api.reqBodyObjectCheck, (req, res, next) => {
   if ('name' in req.body) {
     db.updateUserName(res.locals.user._id, req.body.name, (err) => {
       if (err) {
-        customError(500, res.locals.methodsString, next);
+        api.customError(500, res.locals.methodsString, next);
       } else {
         res.locals.newUserName = req.body.name;
         next();
@@ -290,13 +146,13 @@ app.put('/api/v1/users/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, 
 app.all('/api/v1/messages', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
   next();
-}, reqCheckMethods);
+}, api.reqCheckMethods);
 
-app.head('/api/v1/messages', genericHEAD);
+app.head('/api/v1/messages', api.genericHEAD);
 
-app.options('/api/v1/messages', genericOPTIONS);
+app.options('/api/v1/messages', api.genericOPTIONS);
 
-app.get('/api/v1/messages', reqAcceptCheck, resGetMessages, (req, res) => {
+app.get('/api/v1/messages', api.reqAcceptCheck, api.resGetMessages, (req, res) => {
   const items = res.locals.messages.map((message) => {
     return { href: `/api/v1/messages/${message.ref_id}` };
   });
@@ -313,16 +169,16 @@ app.get('/api/v1/messages', reqAcceptCheck, resGetMessages, (req, res) => {
   });
 });
 
-app.post('/api/v1/messages', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
-  reqBodyPropertyCheck('user', req, res, next);
+app.post('/api/v1/messages', api.reqContentCheck, jsonParser, api.reqBodyObjectCheck, (req, res, next) => {
+  api.reqBodyPropertyCheck('user', req, res, next);
 }, (req, res, next) => {
-  reqBodyPropertyCheck('text', req, res, next);
+  api.reqBodyPropertyCheck('text', req, res, next);
 }, (req, res, next) => {
-  resGetUserByName(req.body.user, req, res, next);
+  api.resGetUserByName(req.body.user, req, res, next);
 }, (req, res, next) => {
   db.createMessage(res.locals.user._id, req.body.text, (err2, msgRes) => {
     if (err2) {
-      customError(500, res.locals.methodsString, next);
+      api.customError(500, res.locals.methodsString, next);
     } else {
       res.status(201)
       .location(`/api/v1/messages/${msgRes.ref_id}`)
@@ -334,18 +190,18 @@ app.post('/api/v1/messages', reqContentCheck, jsonParser, reqBodyObjectCheck, (r
 app.all('/api/v1/messages/:ref_id', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, reqCheckMethods, (req, res, next) => {
-  resGetMessageByRefId(req.params.ref_id, req, res, next);
+}, api.reqCheckMethods, (req, res, next) => {
+  api.resGetMessageByRefId(req.params.ref_id, req, res, next);
 });
 
-app.head('/api/v1/messages/:ref_id', genericHEAD);
+app.head('/api/v1/messages/:ref_id', api.genericHEAD);
 
-app.options('/api/v1/messages/:ref_id', genericOPTIONS);
+app.options('/api/v1/messages/:ref_id', api.genericOPTIONS);
 
 app.delete('/api/v1/messages/:ref_id', (req, res, next) => {
   db.deleteMessage(res.locals.message._id, (err) => {
     if (err) {
-      customError(500, res.locals.methodsString, next);
+      api.customError(500, res.locals.methodsString, next);
     } else {
       res.status(204)
       .end();
@@ -353,16 +209,16 @@ app.delete('/api/v1/messages/:ref_id', (req, res, next) => {
   });
 });
 
-app.get('/api/v1/messages/:ref_id', reqAcceptCheck, (req, res, next) => {
+app.get('/api/v1/messages/:ref_id', api.reqAcceptCheck, (req, res, next) => {
   db.getUserById(res.locals.message.user_id, (err2, userRes) => {
     if (err2) {
-      customError(500, res.locals.methodsString, next);
+      api.customError(500, res.locals.methodsString, next);
     } else {
       res.locals.user = userRes;
       next();
     }
   });
-}, resGetLogs, (req, res) => {
+}, api.resGetLogs, (req, res) => {
   const items = res.locals.logs.filter((log) => {
     const strMsgIds = log.message_ids.map((id) => {
       return id.toString();
@@ -392,15 +248,15 @@ app.get('/api/v1/messages/:ref_id', reqAcceptCheck, (req, res, next) => {
   });
 });
 
-app.put('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
+app.put('/api/v1/messages/:ref_id', api.reqContentCheck, jsonParser, api.reqBodyObjectCheck, (req, res, next) => {
   if ('user' in req.body) {
     db.getUserByName(req.body.user, (err1, userRes) => {
       if (err1) {
-        customError(404, res.locals.methodsString, next, `${req.body.user} isn't an existing user.`);
+        api.customError(404, res.locals.methodsString, next, `${req.body.user} isn't an existing user.`);
       } else {
         db.updateMessageUser(res.locals.message._id, userRes._id, (err2) => {
           if (err2) {
-            customError(500, res.locals.methodsString, next);
+            api.customError(500, res.locals.methodsString, next);
           } else {
             next();
           }
@@ -414,7 +270,7 @@ app.put('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, reqBodyObjectCh
   if ('text' in req.body) {
     db.updateMessageText(res.locals.message._id, req.body.text, (err) => {
       if (err) {
-        customError(500, res.locals.methodsString, next);
+        api.customError(500, res.locals.methodsString, next);
       } else {
         next();
       }
@@ -431,13 +287,13 @@ app.put('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, reqBodyObjectCh
 app.all('/api/v1/logs', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'POST'];
   next();
-}, reqCheckMethods);
+}, api.reqCheckMethods);
 
-app.head('/api/v1/logs', genericHEAD);
+app.head('/api/v1/logs', api.genericHEAD);
 
-app.options('/api/v1/logs', genericOPTIONS);
+app.options('/api/v1/logs', api.genericOPTIONS);
 
-app.get('/api/v1/logs', reqAcceptCheck, resGetLogs, (req, res) => {
+app.get('/api/v1/logs', api.reqAcceptCheck, api.resGetLogs, (req, res) => {
   const items = res.locals.logs.map((log) => {
     return { href: `/api/v1/logs/${log.name}` };
   });
@@ -454,24 +310,24 @@ app.get('/api/v1/logs', reqAcceptCheck, resGetLogs, (req, res) => {
   });
 });
 
-app.post('/api/v1/logs', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
-  reqBodyPropertyCheck('name', req, res, next);
+app.post('/api/v1/logs', api.reqContentCheck, jsonParser, api.reqBodyObjectCheck, (req, res, next) => {
+  api.reqBodyPropertyCheck('name', req, res, next);
 }, (req, res, next) => {
-  reqBodyPropertyCheck('users', req, res, next);
+  api.reqBodyPropertyCheck('users', req, res, next);
 }, (req, res, next) => {
-  reqBodyPropertyCheck('messages', req, res, next);
+  api.reqBodyPropertyCheck('messages', req, res, next);
 }, (req, res, next) => {
   if (!(Array.isArray(req.body.users))) {
-    customError(400, res.locals.methodsString, next, 'The "users" property in your POST request body should be a JSON array.');
+    api.customError(400, res.locals.methodsString, next, 'The "users" property in your POST request body should be a JSON array.');
   } else if (!(Array.isArray(req.body.messages))) {
-    customError(400, res.locals.methodsString, next, 'The "messages" property in your POST request body should be a JSON array.');
+    api.customError(400, res.locals.methodsString, next, 'The "messages" property in your POST request body should be a JSON array.');
   } else {
     next();
   }
 }, (req, res, next) => {
-  resGetMessageByRefId(req.body.messages, req, res, next);
+  api.resGetMessageByRefId(req.body.messages, req, res, next);
 }, (req, res, next) => {
-  resGetUserByName(req.body.users, req, res, next);
+  api.resGetUserByName(req.body.users, req, res, next);
 }, (req, res, next) => {
   const dbUsers = res.locals.user.map((user) => {
     return user._id;
@@ -481,7 +337,7 @@ app.post('/api/v1/logs', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, 
   });
   db.createLog(dbUsers, dbMsgs, req.body.name, (err, logRes) => {
     if (err) {
-      customError(500, res.locals.methodsString, next);
+      api.customError(500, res.locals.methodsString, next);
     } else {
       res.status(201)
       .location(`/api/v1/logs/${logRes.name}`)
@@ -493,18 +349,18 @@ app.post('/api/v1/logs', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, 
 app.all('/api/v1/logs/:name', (req, res, next) => {
   res.locals.methods = ['HEAD', 'OPTIONS', 'GET', 'PUT', 'DELETE'];
   next();
-}, reqCheckMethods, (req, res, next) => {
-  resGetLogByName(req.params.name, req, res, next);
+}, api.reqCheckMethods, (req, res, next) => {
+  api.resGetLogByName(req.params.name, req, res, next);
 });
 
-app.head('/api/v1/logs/:name', genericHEAD);
+app.head('/api/v1/logs/:name', api.genericHEAD);
 
-app.options('/api/v1/logs/:name', genericOPTIONS);
+app.options('/api/v1/logs/:name', api.genericOPTIONS);
 
 app.delete('/api/v1/logs/:name', (req, res, next) => {
   db.deleteLog(res.locals.log._id, (err) => {
     if (err) {
-      customError(500, res.locals.methodsString, next);
+      api.customError(500, res.locals.methodsString, next);
     } else {
       res.status(204)
       .end();
@@ -512,13 +368,15 @@ app.delete('/api/v1/logs/:name', (req, res, next) => {
   });
 });
 
-app.get('/api/v1/logs/:name', reqAcceptCheck, resGetUsers, resGetMessages, (req, res) => {
+app.get('/api/v1/logs/:name', api.reqAcceptCheck, api.resGetUsers, api.resGetMessages, (req, res) => {
   const strMsgIds = res.locals.log.message_ids.map((id) => {
     return id.toString();
   });
+
   const strUserIds = res.locals.log.user_ids.map((id) => {
     return id.toString();
   });
+
   const msgItems = res.locals.messages.filter((message) => {
     if (strMsgIds.indexOf(message._id.toString()) > -1) {
       return message;
@@ -527,6 +385,7 @@ app.get('/api/v1/logs/:name', reqAcceptCheck, resGetUsers, resGetMessages, (req,
   }).map((message) => {
     return message.ref_id.toString();
   });
+
   const userItems = res.locals.users.filter((user) => {
     if (strUserIds.indexOf(user._id.toString()) > -1) {
       return user;
@@ -535,6 +394,7 @@ app.get('/api/v1/logs/:name', reqAcceptCheck, resGetUsers, resGetMessages, (req,
   }).map((user) => {
     return user.name;
   });
+
   const items = userItems.map((user) => {
     return { href: `/api/v1/users/${user}` };
   }).concat(
@@ -542,6 +402,7 @@ app.get('/api/v1/logs/:name', reqAcceptCheck, resGetUsers, resGetMessages, (req,
       return { href: `/api/v1/messages/${msg}` };
     })
   );
+
   res.status(200)
   .set({
     'Content-Type': 'application/hal+json',
@@ -560,12 +421,12 @@ app.get('/api/v1/logs/:name', reqAcceptCheck, resGetUsers, resGetMessages, (req,
   });
 });
 
-app.put('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
+app.put('/api/v1/logs/:name', api.reqContentCheck, jsonParser, api.reqBodyObjectCheck, (req, res, next) => {
   if ('users' in req.body) {
     if (Array.isArray(req.body.users)) {
       db.getUserByName(req.body.users, (err1, userRes) => {
         if (err1) {
-          customError(400, res.locals.methodsString, next, 'Invalid user names in PUT request body.');
+          api.customError(400, res.locals.methodsString, next, 'Invalid user names in PUT request body.');
         } else {
           let userIds;
           if (Array.isArray(userRes)) {
@@ -577,7 +438,7 @@ app.put('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (
           }
           db.updateLogUsers(res.locals.log._id, userIds, (err2) => {
             if (err2) {
-              customError(500, res.locals.methodsString, next);
+              api.customError(500, res.locals.methodsString, next);
             } else {
               next();
             }
@@ -585,7 +446,7 @@ app.put('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (
         }
       });
     } else {
-      customError(400, res.locals.methodsString, next, 'The "users" property in your PUT request body should be a JSON array.');
+      api.customError(400, res.locals.methodsString, next, 'The "users" property in your PUT request body should be a JSON array.');
     }
   } else {
     next();
@@ -595,7 +456,7 @@ app.put('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (
     if (Array.isArray(req.body.messages)) {
       db.getMessageByRefId(req.body.messages, (err1, msgRes) => {
         if (err1) {
-          customError(400, res.locals.methodsString, next, 'Invalid message refIds in PUT request body.');
+          api.customError(400, res.locals.methodsString, next, 'Invalid message refIds in PUT request body.');
         } else {
           let msgIds;
           if (Array.isArray(msgRes)) {
@@ -607,7 +468,7 @@ app.put('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (
           }
           db.updateLogUsers(res.locals.log._id, msgIds, (err2) => {
             if (err2) {
-              customError(500, res.locals.methodsString, next);
+              api.customError(500, res.locals.methodsString, next);
             } else {
               next();
             }
@@ -615,7 +476,7 @@ app.put('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (
         }
       });
     } else {
-      customError(400, res.locals.methodsString, next, 'The "messages" property in your PUT request body should be a JSON array.');
+      api.customError(400, res.locals.methodsString, next, 'The "messages" property in your PUT request body should be a JSON array.');
     }
   } else {
     next();
@@ -624,7 +485,7 @@ app.put('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (
   if ('name' in req.body) {
     db.updateLogName(res.locals.log._id, req.body.name, (err) => {
       if (err) {
-        customError(500, res.locals.methodsString, next);
+        api.customError(500, res.locals.methodsString, next);
       } else {
         res.locals.newLogName = req.body.name;
         next();
