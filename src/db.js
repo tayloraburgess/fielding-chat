@@ -9,7 +9,7 @@ import {
 
 /** 
   * Wrapper functions for Mongoose MongoDB queries, specific to this API.
-  * @module api
+  * @module db
 */
 
 /** 

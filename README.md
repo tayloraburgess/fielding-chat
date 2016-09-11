@@ -41,6 +41,7 @@ A RESTful API chat server. Built using [node.js](https://nodejs.org/), [express.
 	```
 	$ npm run-script serve
 	```
+7. Further documentation for API functions is in the ./docs directory.
 
 ## API
 
