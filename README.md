@@ -59,7 +59,11 @@ If you'd like to explore without reading further, start with a GET, HEAD, or OPT
 
 ### /api/v1/users
 
-Users are the core API resource. If you send a GET request to this endpoint, you'll receive a list of URLs to existing users in response. You can also POST to this endpoint to create a new user. Your POST data should look something like this (with the "Content-Type" header set to "application/hal+json" or "application/json"):
+Users are the core API resource. They only have one property: a "name" string. 
+
+If you send a GET request to this endpoint, you'll receive a list of URLs to existing users in response.
+
+You can also POST to this endpoint to create a new user. Your POST data should look like this (with the "Content-Type" header set to "application/hal+json" or "application/json"):
 
 ```
 {
@@ -72,11 +76,11 @@ Users are the core API resource. If you send a GET request to this endpoint, you
 Once you have a list of user URLs, or have created some users, you can GET their representation at this endpoint. You can also:
 
 - PUT updated user information to this endpoint (using the same template as POST above). You'll receive a URL for the updated resource in response.
-- DELETE the user resource (note: this will also delete any messages associated with the user and remove the users from any associated logs)
+- DELETE the user resource (note: this will also delete any messages associated with the user and remove the users from any associated logs).
 
 ### /api/v1/messages
 
-Messages contain text, and are attached to a particular user. To get a list of existing messages, send a GET request to this endpoint. Like /api/v1/users, you can also POST to this endpoint to create a new message. Follow this data format for POST:
+Messages contain text, and have a "user" property--you'll probably want this to be the user that sent or wrote the message. To get a list of existing messages, send a GET request to this endpoint. Like /api/v1/users, you can also POST to this endpoint to create a new message. Follow this data format for POST:
 
 ```
 {
@@ -89,17 +93,23 @@ If the user you supply doesn't exist, you'll get an error.
 
 #### /api/v1/messages/:ref_id
 
-Messages don't have names or titles, but you can find them using their "refId", which is a number the server automatically generates when it creates a new message. When you POST a new message, you'll receive a URL in response containing its refId. The list of messages you can GET from /api/v1/messages also contain refId URLs.
+Messages don't have names or titles, but you can find them using their "refId", which is a number the server automatically generates when it creates a new message.
+
+When you POST a new message, you'll receive a URL in response containing its refId. The list of messages you can GET from /api/v1/messages also contains refId URLs.
 
 At this endpoint, you can:
 
 - GET a representation of the message
 - PUT updated message information. You should use the POST template from /api/v1/messages--however, you can leave out a property if you want, say, to only update the "text" but not the "user".
-- DELETE the message resource (note: this will also remove the message from any associated logs)
+- DELETE the message resource (note: this will also remove the message from any associated logs).
 
 ### /api/v1/logs
 
-Logs are highest-level resource in the API. Each log has a name, and also has a list of users and a list of messages. It's up to you how to use that represented information, though. For example, logs can have an unlimited number of users in their 'users' property--but you could articifically limit it to just two users in your application if you don't want group chats. Essentially, logs are what allow users to share a stream of messages with each other--but it's a bit open-ended.
+Logs are the highest-level resource in the API. Each log has a "name", and also has an array of "users" and an array of "messages". It's up to you how to use that represented information, though.
+
+For example, logs can have an unlimited number of "users" in the array--but you could articifically limit that to just two users in your client application if you don't want group chats. Essentially, logs are what allow users to share a stream of messages with each other--but it's a bit open-ended.
+
+(An additional note: when created, all resources are given a "created_at" property, which is automatically set to the current time & date. You could use this data as a way to order messages taken from a log representation, if you want.)
 
 Like the other endpoints, you can POST in this format:
 
