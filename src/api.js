@@ -267,9 +267,7 @@ app.get('/api/v1/users/:name', reqAcceptCheck, resGetMessages, (req, res) => {
   });
 });
 
-app.use('/api/v1/users/:name', reqContentCheck, jsonParser, reqBodyObjectCheck);
-
-app.use('/api/v1/users/:name', (req, res, next) => {
+app.put('/api/v1/users/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
   if ('name' in req.body) {
     db.updateUserName(res.locals.user._id, req.body.name, (err) => {
       if (err) {
@@ -283,9 +281,7 @@ app.use('/api/v1/users/:name', (req, res, next) => {
     res.locals.newUserName = res.locals.user.name;
     next();
   }
-});
-
-app.put('/api/v1/users/:name', (req, res) => {
+}, (req, res) => {
   res.status(200)
   .location(`/api/v1/users/${res.locals.newUserName}`)
   .end();
@@ -396,9 +392,7 @@ app.get('/api/v1/messages/:ref_id', reqAcceptCheck, (req, res, next) => {
   });
 });
 
-app.use('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, reqBodyObjectCheck);
-
-app.use('/api/v1/messages/:ref_id', (req, res, next) => {
+app.put('/api/v1/messages/:ref_id', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
   if ('user' in req.body) {
     db.getUserByName(req.body.user, (err1, userRes) => {
       if (err1) {
@@ -416,9 +410,7 @@ app.use('/api/v1/messages/:ref_id', (req, res, next) => {
   } else {
     next();
   }
-});
-
-app.use('/api/v1/messages/:ref_id', (req, res, next) => {
+}, (req, res, next) => {
   if ('text' in req.body) {
     db.updateMessageText(res.locals.message._id, req.body.text, (err) => {
       if (err) {
@@ -430,9 +422,7 @@ app.use('/api/v1/messages/:ref_id', (req, res, next) => {
   } else {
     next();
   }
-});
-
-app.put('/api/v1/messages/:ref_id', (req, res) => {
+}, (req, res) => {
   res.status(200)
   .location(`/api/v1/messages/${res.locals.message.ref_id}`)
   .end();
@@ -570,9 +560,7 @@ app.get('/api/v1/logs/:name', reqAcceptCheck, resGetUsers, resGetMessages, (req,
   });
 });
 
-app.use('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck);
-
-app.use('/api/v1/logs/:name', (req, res, next) => {
+app.put('/api/v1/logs/:name', reqContentCheck, jsonParser, reqBodyObjectCheck, (req, res, next) => {
   if ('users' in req.body) {
     if (Array.isArray(req.body.users)) {
       db.getUserByName(req.body.users, (err1, userRes) => {
@@ -602,9 +590,7 @@ app.use('/api/v1/logs/:name', (req, res, next) => {
   } else {
     next();
   }
-});
-
-app.use('/api/v1/logs/:name', (req, res, next) => {
+}, (req, res, next) => {
   if ('messages' in req.body) {
     if (Array.isArray(req.body.messages)) {
       db.getMessageByRefId(req.body.messages, (err1, msgRes) => {
@@ -634,9 +620,7 @@ app.use('/api/v1/logs/:name', (req, res, next) => {
   } else {
     next();
   }
-});
-
-app.use('/api/v1/logs/:name', (req, res, next) => {
+}, (req, res, next) => {
   if ('name' in req.body) {
     db.updateLogName(res.locals.log._id, req.body.name, (err) => {
       if (err) {
@@ -650,9 +634,7 @@ app.use('/api/v1/logs/:name', (req, res, next) => {
     res.locals.newLogName = res.locals.log.name;
     next();
   }
-});
-
-app.put('/api/v1/logs/:name', (req, res) => {
+}, (req, res) => {
   res.status(200)
   .location(`/api/v1/logs/${res.locals.newLogName}`)
   .end();
